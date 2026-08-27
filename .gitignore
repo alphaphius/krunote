@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+.env
+.env.*
+!.env.example
+.clasp.json
+.clasprc.json
+.setup-state.json
+apps-script/.clasp.json
+tmp/
+playwright-report/
+test-results/
+*.tsbuildinfo

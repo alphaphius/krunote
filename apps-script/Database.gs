@@ -1,0 +1,35 @@
+var ENTITY_SHEETS = {
+  academicYears:'AcademicYears', terms:'Terms', gradeLevels:'GradeLevels', rooms:'Rooms', subjects:'Subjects', teachingGroups:'TeachingGroups', students:'Students', enrollments:'Enrollments', scheduleSlots:'ScheduleSlots', attendanceSessions:'AttendanceSessions', attendanceRecords:'AttendanceRecords', assessmentCategories:'AssessmentCategories', assessments:'Assessments', assessmentTargets:'AssessmentTargets', submissions:'Submissions', scores:'Scores', behaviorLogs:'BehaviorLogs', gradeThresholds:'GradeThresholds', finalGrades:'FinalGrades', exportRequests:'ExportRequests'
+};
+
+function setupSystem_(payload) {
+  var lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    var props = PropertiesService.getScriptProperties(); var id = props.getProperty('SPREADSHEET_ID'); var spreadsheet;
+    if (id) spreadsheet = SpreadsheetApp.openById(id); else { spreadsheet = SpreadsheetApp.create('KruNote Data'); props.setProperty('SPREADSHEET_ID', spreadsheet.getId()); }
+    Object.keys(ENTITY_SHEETS).forEach(function(key) { ensureEntitySheet_(spreadsheet, ENTITY_SHEETS[key]); });
+    ensureEntitySheet_(spreadsheet, 'MutationLog');
+    props.setProperty('SCHEMA_VERSION', String(SCHEMA_VERSION));
+    if (!props.getProperty('PIN_HASH')) setPin_((payload && payload.initialPin) || '1234', true);
+    ensureExportFolder_();
+    if (payload && payload.includeMock && readAll_('students').length === 0) seedMockData_();
+    return { installed: true, mustChangePin: props.getProperty('MUST_CHANGE_PIN') === 'true' };
+  } finally { lock.releaseLock(); }
+}
+
+function spreadsheet_() { var id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID'); if (!id) throw apiError_('NOT_INSTALLED','กรุณาติดตั้งระบบก่อน'); return SpreadsheetApp.openById(id); }
+function ensureEntitySheet_(ss, name) { var sheet = ss.getSheetByName(name) || ss.insertSheet(name); if (sheet.getLastRow() === 0) { sheet.getRange(1,1,1,4).setValues([['id','json','version','updatedAt']]); sheet.setFrozenRows(1); sheet.getRange(1,1,1,4).setFontWeight('bold').setBackground('#166b59').setFontColor('#ffffff'); } return sheet; }
+function sheetFor_(collection) { var name = ENTITY_SHEETS[collection] || collection; return ensureEntitySheet_(spreadsheet_(), name); }
+function readAll_(collection) { var sheet = sheetFor_(collection); if (sheet.getLastRow() < 2) return []; return sheet.getRange(2,1,sheet.getLastRow()-1,4).getValues().map(function(row) { try { return JSON.parse(row[1]); } catch (_) { return null; } }).filter(Boolean); }
+function findRecord_(collection,id) { return readAll_(collection).filter(function(item) { return item.id === id; })[0] || null; }
+function upsertRecord_(collection, record, expectedVersion) {
+  var sheet = sheetFor_(collection); var values = sheet.getLastRow() > 1 ? sheet.getRange(2,1,sheet.getLastRow()-1,4).getValues() : []; var rowIndex = -1;
+  for (var i=0;i<values.length;i++) if (values[i][0] === record.id) { rowIndex=i+2; break; }
+  var current = rowIndex > 0 ? JSON.parse(sheet.getRange(rowIndex,2).getValue()) : null;
+  if (current && expectedVersion !== undefined && Number(expectedVersion) !== Number(current.version)) throw apiError_('VERSION_CONFLICT','ข้อมูลถูกแก้จากอุปกรณ์อื่น',{ current:current });
+  var now = new Date().toISOString(); var next = Object.assign({}, current || {}, record, { version:(current && current.version || 0)+1, createdAt:current && current.createdAt || record.createdAt || now, updatedAt:now }); var row = [[next.id,JSON.stringify(next),next.version,next.updatedAt]];
+  if (rowIndex > 0) sheet.getRange(rowIndex,1,1,4).setValues(row); else sheet.appendRow(row[0]); return next;
+}
+function bootstrap_() { var result={ serverTime:new Date().toISOString(), cursor:new Date().toISOString() }; Object.keys(ENTITY_SHEETS).forEach(function(key){ result[key]=readAll_(key); }); return result; }
+function connectionTest_() { var cache=CacheService.getScriptCache(); var marker=Utilities.getUuid(); cache.put('connection-test',marker,30); return { health:true, post:true, roundTrip:cache.get('connection-test')===marker }; }
+function ensureExportFolder_() { var props=PropertiesService.getScriptProperties(); var id=props.getProperty('EXPORT_FOLDER_ID'); if (id) { try { return DriveApp.getFolderById(id); } catch (_) {} } var folder=DriveApp.createFolder('KruNote Reports'); props.setProperty('EXPORT_FOLDER_ID',folder.getId()); return folder; }
