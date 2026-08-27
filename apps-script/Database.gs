@@ -12,7 +12,11 @@ function setupSystem_(payload) {
     props.setProperty('SCHEMA_VERSION', String(SCHEMA_VERSION));
     if (!props.getProperty('PIN_HASH')) setPin_((payload && payload.initialPin) || '1234', true);
     ensureExportFolder_();
-    if (payload && payload.includeMock && readAll_('students').length === 0) seedMockData_();
+    if (payload && payload.includeMock) {
+      var students=readAll_('students'); var assessments=readAll_('assessments'); var incomplete=students.length<90 || assessments.length<12;
+      if (students.length===0) seedMockData_();
+      else if (incomplete && mockOnlyDatabase_()) { clearMockDatabase_(); seedMockData_(); }
+    }
     return { installed: true, mustChangePin: props.getProperty('MUST_CHANGE_PIN') === 'true' };
   } finally { lock.releaseLock(); }
 }
@@ -33,3 +37,5 @@ function upsertRecord_(collection, record, expectedVersion) {
 function bootstrap_() { var result={ serverTime:new Date().toISOString(), cursor:new Date().toISOString() }; Object.keys(ENTITY_SHEETS).forEach(function(key){ result[key]=readAll_(key); }); return result; }
 function connectionTest_() { var cache=CacheService.getScriptCache(); var marker=Utilities.getUuid(); cache.put('connection-test',marker,30); return { health:true, post:true, roundTrip:cache.get('connection-test')===marker }; }
 function ensureExportFolder_() { var props=PropertiesService.getScriptProperties(); var id=props.getProperty('EXPORT_FOLDER_ID'); if (id) { try { return DriveApp.getFolderById(id); } catch (_) {} } var folder=DriveApp.createFolder('KruNote Reports'); props.setProperty('EXPORT_FOLDER_ID',folder.getId()); return folder; }
+function mockOnlyDatabase_() { return Object.keys(ENTITY_SHEETS).every(function(collection){return readAll_(collection).every(function(item){return item.isMock===true;});}); }
+function clearMockDatabase_() { Object.keys(ENTITY_SHEETS).forEach(function(collection){var sheet=sheetFor_(collection); if(sheet.getLastRow()>1) sheet.deleteRows(2,sheet.getLastRow()-1);}); }
