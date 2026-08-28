@@ -26,6 +26,7 @@ export interface AppContextValue {
   lock: () => void
   disconnect: () => void
   requestServerExport: (payload: unknown) => Promise<{ jobId: string; exportRequestId: string }>
+  updatePin: (currentPin: string, newPin: string) => Promise<void>
 }
 
 export const AppContext = createContext<AppContextValue | null>(null)
