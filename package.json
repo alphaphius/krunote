@@ -12,6 +12,7 @@
     "setup": "node scripts/setup.mjs",
     "setup:github": "node scripts/setup-github.mjs",
     "setup:apps-script": "node scripts/setup-apps-script.mjs",
+    "initialize:api": "node scripts/initialize-api.mjs",
     "deploy": "node scripts/deploy.mjs",
     "deploy:web": "node scripts/deploy-web.mjs",
     "deploy:api": "node scripts/deploy-api.mjs",
