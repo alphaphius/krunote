@@ -1,5 +1,5 @@
 var API_VERSION = '1.0.0';
-var SCHEMA_VERSION = 1;
+var SCHEMA_VERSION = 2;
 
 function doGet(e) {
   try {

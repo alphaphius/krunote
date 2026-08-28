@@ -1,5 +1,5 @@
 var ENTITY_SHEETS = {
-  academicYears:'AcademicYears', terms:'Terms', gradeLevels:'GradeLevels', rooms:'Rooms', subjects:'Subjects', teachingGroups:'TeachingGroups', students:'Students', enrollments:'Enrollments', scheduleSlots:'ScheduleSlots', attendanceSessions:'AttendanceSessions', attendanceRecords:'AttendanceRecords', assessmentCategories:'AssessmentCategories', assessments:'Assessments', assessmentTargets:'AssessmentTargets', submissions:'Submissions', scores:'Scores', behaviorLogs:'BehaviorLogs', gradeThresholds:'GradeThresholds', finalGrades:'FinalGrades', exportRequests:'ExportRequests'
+  academicYears:'AcademicYears', terms:'Terms', gradeLevels:'GradeLevels', rooms:'Rooms', subjects:'Subjects', teachingGroups:'TeachingGroups', students:'Students', enrollments:'Enrollments', scheduleSlots:'ScheduleSlots', teacherLeaves:'TeacherLeaves', attendanceSessions:'AttendanceSessions', attendanceRecords:'AttendanceRecords', assessmentCategories:'AssessmentCategories', assessments:'Assessments', assessmentTargets:'AssessmentTargets', submissions:'Submissions', scores:'Scores', behaviorLogs:'BehaviorLogs', gradeThresholds:'GradeThresholds', finalGrades:'FinalGrades', exportRequests:'ExportRequests'
 };
 
 function setupSystem_(payload) {

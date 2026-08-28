@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 import {
   CalendarDots,
+  CalendarCheck,
   ChartBar,
   ClipboardText,
-  DotsThreeCircle,
   Gear,
   IdentificationCard,
   Notebook,
@@ -14,17 +14,19 @@ import { Brand } from './Brand'
 import { SyncCapsule } from './SyncCapsule'
 import { Button } from './ui'
 
-const allItems: Array<{ route: AppRoute; key: 'today' | 'quickEdit' | 'work' | 'gradebook' | 'behavior' | 'reports' | 'settings'; icon: typeof CalendarDots }> = [
+const allItems: Array<{ route: AppRoute; key: 'today' | 'checkIn' | 'quickEdit' | 'work' | 'schedule' | 'gradebook' | 'behavior' | 'reports' | 'settings'; icon: typeof CalendarDots }> = [
   { route: 'today', key: 'today', icon: CalendarDots },
-  { route: 'quick-edit', key: 'quickEdit', icon: Table },
+  { route: 'attendance', key: 'checkIn', icon: CalendarCheck },
   { route: 'work', key: 'work', icon: ClipboardText },
+  { route: 'quick-edit', key: 'quickEdit', icon: Table },
+  { route: 'schedule', key: 'schedule', icon: CalendarDots },
   { route: 'gradebook', key: 'gradebook', icon: Notebook },
   { route: 'behavior', key: 'behavior', icon: IdentificationCard },
   { route: 'reports', key: 'reports', icon: ChartBar },
   { route: 'settings', key: 'settings', icon: Gear },
 ]
 
-const mobileItems = allItems.slice(0, 4)
+const mobileItems = [allItems[0], allItems[1], allItems[2], allItems[5]]
 
 function NavButton({ route, label, icon: Icon, active, onClick }: { route: AppRoute; label: string; icon: typeof CalendarDots; active: boolean; onClick: (route: AppRoute) => void }) {
   return <button type="button" className={`nav-link ${active ? 'active' : ''}`} onClick={() => onClick(route)} aria-current={active ? 'page' : undefined}><Icon /><span>{label}</span></button>
@@ -49,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <nav className="mobile-nav" aria-label="เมนูมือถือ">
         {mobileItems.map((item) => <NavButton key={item.route} route={item.route} label={t(item.key)} icon={item.icon} active={route === item.route} onClick={navigate} />)}
-        <NavButton route="settings" label={t('more')} icon={DotsThreeCircle} active={['behavior','reports','settings'].includes(route)} onClick={navigate} />
+        <NavButton route="schedule" label={t('schedule')} icon={CalendarDots} active={route === 'schedule'} onClick={navigate} />
       </nav>
       <SyncCapsule />
     </div>

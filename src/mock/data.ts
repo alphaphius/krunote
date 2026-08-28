@@ -17,6 +17,7 @@ import type {
   Subject,
   SubmissionRecord,
   TeachingGroup,
+  TeacherLeave,
   Term,
 } from '../domain/types'
 
@@ -72,6 +73,7 @@ export function createMockData(): BootstrapData {
     startTime: `${String(8 + (index % 6)).padStart(2, '0')}:30`,
     endTime: `${String(9 + (index % 6)).padStart(2, '0')}:20`,
   }))
+  const teacherLeaves: TeacherLeave[] = [record(`leave-${dateOffset(2)}`, { date: dateOffset(2), substituteName: 'ครูสมชาย ใจดี', substitutePhone: '081-234-5678', reason: 'ลากิจส่วนตัว', note: 'ฝากใบงานไว้ที่ห้องพักครู' })]
 
   const attendanceSessions: AttendanceSession[] = []
   const attendanceRecords: AttendanceRecord[] = []
@@ -161,6 +163,7 @@ export function createMockData(): BootstrapData {
     students,
     enrollments,
     scheduleSlots,
+    teacherLeaves,
     attendanceSessions,
     attendanceRecords,
     assessmentCategories,

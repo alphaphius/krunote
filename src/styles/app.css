@@ -130,6 +130,22 @@ a { color: inherit; }
 .student-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); }
 .student-card-actions { display: grid; grid-template-columns: 1fr 1fr 5rem; gap: var(--space-2); }
 .student-card-actions .state-button { min-width: 0; }
+.student-card-actions.work-actions { grid-template-columns: minmax(7rem, .8fr) minmax(10rem, 1.2fr); align-items: center; }
+.score-label { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); color: var(--color-text-muted); font-size: .875rem; }
+.attendance-table { min-width: 34rem; }
+
+.schedule-panel, .weekly-overview, .leave-card { margin-bottom: var(--space-4); }
+.schedule-list { display: grid; gap: var(--space-2); }
+.schedule-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-input); }
+.period-badge { display: grid; width: 2.75rem; height: 2.75rem; flex: 0 0 auto; place-items: center; border-radius: var(--radius-pill); color: var(--color-on-primary); background: var(--color-primary); font-size: 1.1rem; font-weight: 800; }
+.leave-details { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: var(--space-3); }
+.leave-details > div { display: grid; gap: var(--space-1); }
+.leave-details span { color: var(--color-text-muted); font-size: .875rem; }
+.week-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: var(--space-2); overflow-x: auto; }
+.week-day { min-width: 10rem; padding: var(--space-2); border-radius: var(--radius-input); background: var(--color-surface-muted); }
+.week-day h3 { margin: 0 0 var(--space-2); }
+.week-slot { display: grid; gap: .15rem; margin-bottom: var(--space-2); padding: var(--space-2); border: 1px solid var(--color-border); border-radius: calc(var(--radius-input) - .15rem); background: var(--color-surface); }
+.week-slot span, .week-slot small { color: var(--color-text-muted); }
 
 .status-badge { display: inline-flex; min-height: 1.75rem; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); color: var(--color-text-muted); background: var(--color-surface-muted); font-size: 0.8125rem; font-weight: 700; }
 .status-badge.warning { color: var(--color-warning); background: var(--color-warning-soft); }
@@ -178,6 +194,7 @@ a { color: inherit; }
   .mobile-nav .nav-link { display: grid; min-height: 3.75rem; place-items: center; gap: 0; margin: 0; padding: var(--space-1); border-radius: 0; font-size: 0.75rem; text-align: center; }
   .main { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
   .split-grid, .panel-grid { grid-template-columns: 1fr; }
+  .leave-details { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sync-capsule { bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
 }
@@ -196,6 +213,10 @@ a { color: inherit; }
   .list-row { align-items: flex-start; flex-direction: column; }
   .list-row > .button, .list-row > .button-row { width: 100%; }
   .list-row > .button-row .button { flex: 1; }
+  .schedule-row { align-items: flex-start; flex-wrap: wrap; }
+  .schedule-row .status-badge { margin-left: 3.5rem; }
+  .student-card-actions.work-actions { grid-template-columns: 1fr; }
+  .score-label { justify-content: space-between; }
 }
 
 @media (prefers-reduced-motion: reduce) {

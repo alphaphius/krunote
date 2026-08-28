@@ -9,7 +9,7 @@ import { syncOutbox, type SyncSummary } from '../features/sync/engine'
 import { dictionary } from '../i18n/dictionaries'
 import { AppShell } from '../components/AppShell'
 import { SetupPage, UnlockPage, ChangePinPage } from '../pages/AuthPages'
-import { BehaviorPage, GradebookPage, QuickEditPage, ReportsPage, SettingsPage, TodayPage, WorkPage } from '../pages/AppPages'
+import { AttendancePage, BehaviorPage, GradebookPage, QuickEditPage, ReportsPage, SchedulePage, SettingsPage, TodayPage, WorkPage } from '../pages/AppPages'
 
 const emptySummary: SyncSummary = { QUEUED: 0, SENDING: 0, RETRY_WAIT: 0, CONFLICT: 0, FAILED: 0, CONFIRMED: 0 }
 type Phase = 'setup' | 'unlock' | 'change-pin' | 'app'
@@ -53,6 +53,6 @@ export default function App() {
   if (phase === 'change-pin') return <ChangePinPage locale={locale} onChangePin={changePin} busy={busy} error={error} />
   if (!data) return null
   const context: AppContextValue = { data,locale,theme,density,textSize,route,online,demo,syncSummary,t: (key) => dictionary(locale)[key],navigate:setRoute,mutate,setLocale,setTheme,setDensity,setTextSize,syncNow,lock,disconnect,requestServerExport,updatePin:changePin }
-  const pages: Record<AppRoute,React.ReactNode> = { today:<TodayPage />, 'quick-edit':<QuickEditPage />, work:<WorkPage />, gradebook:<GradebookPage />, behavior:<BehaviorPage />, reports:<ReportsPage />, settings:<SettingsPage /> }
+  const pages: Record<AppRoute,React.ReactNode> = { today:<TodayPage />, attendance:<AttendancePage />, work:<WorkPage />, 'quick-edit':<QuickEditPage />, schedule:<SchedulePage />, gradebook:<GradebookPage />, behavior:<BehaviorPage />, reports:<ReportsPage />, settings:<SettingsPage /> }
   return <AppContext.Provider value={context}><AppShell>{pages[route]}</AppShell></AppContext.Provider>
 }

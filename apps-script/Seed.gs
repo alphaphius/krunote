@@ -7,7 +7,7 @@ function seedRows_(collection,records) {
 }
 
 function seedMockData_() {
-  var data={academicYears:[],terms:[],gradeLevels:[],rooms:[],subjects:[],teachingGroups:[],students:[],enrollments:[],scheduleSlots:[],attendanceSessions:[],attendanceRecords:[],assessmentCategories:[],assessments:[],assessmentTargets:[],submissions:[],scores:[],behaviorLogs:[],gradeThresholds:[],finalGrades:[],exportRequests:[]};
+  var data={academicYears:[],terms:[],gradeLevels:[],rooms:[],subjects:[],teachingGroups:[],students:[],enrollments:[],scheduleSlots:[],teacherLeaves:[],attendanceSessions:[],attendanceRecords:[],assessmentCategories:[],assessments:[],assessmentTargets:[],submissions:[],scores:[],behaviorLogs:[],gradeThresholds:[],finalGrades:[],exportRequests:[]};
   var year=baseRecord_('year-2569',{name:'2569',startDate:'2026-05-01',endDate:'2027-03-31',active:true});
   var term=baseRecord_('term-2569-1',{academicYearId:year.id,name:'ภาคเรียนที่ 1',number:1,startDate:'2026-05-01',endDate:'2026-10-15',active:true});
   data.academicYears.push(year); data.terms.push(term); data.subjects.push(baseRecord_('subject-math',{code:'ค31101',name:'คณิตศาสตร์'}));
@@ -40,5 +40,6 @@ function seedMockData_() {
     });
   });
   [['4',80],['3.5',75],['3',70],['2.5',65],['2',60],['1.5',55],['1',50],['0',0]].forEach(function(item,index){data.gradeThresholds.push(baseRecord_('threshold-'+item[0],{termId:term.id,grade:item[0],minScore:item[1],order:index+1}));});
+  var leaveDate=new Date(); leaveDate.setDate(leaveDate.getDate()+2); var leaveDateText=Utilities.formatDate(leaveDate,'Asia/Bangkok','yyyy-MM-dd'); data.teacherLeaves.push(baseRecord_('leave-'+leaveDateText,{date:leaveDateText,substituteName:'ครูสมชาย ใจดี',substitutePhone:'081-234-5678',reason:'ลากิจส่วนตัว',note:'ฝากใบงานไว้ที่ห้องพักครู'}));
   Object.keys(data).forEach(function(collection){seedRows_(collection,data[collection]);}); SpreadsheetApp.flush();
 }

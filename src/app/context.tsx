@@ -3,7 +3,7 @@ import type { BootstrapData, DomainMutation, Locale, ThemePreference } from '../
 import type { SyncSummary } from '../features/sync/engine'
 import type { TranslationKey } from '../i18n/dictionaries'
 
-export type AppRoute = 'today' | 'quick-edit' | 'work' | 'gradebook' | 'behavior' | 'reports' | 'settings'
+export type AppRoute = 'today' | 'attendance' | 'work' | 'quick-edit' | 'schedule' | 'gradebook' | 'behavior' | 'reports' | 'settings'
 
 export interface AppContextValue {
   data: BootstrapData

@@ -81,6 +81,14 @@ export interface ScheduleSlot extends VersionedRecord {
   endTime: string
 }
 
+export interface TeacherLeave extends VersionedRecord {
+  date: string
+  substituteName: string
+  substitutePhone: string
+  reason: string
+  note?: string
+}
+
 export interface AttendanceSession extends VersionedRecord {
   teachingGroupId: string
   date: string
@@ -181,6 +189,7 @@ export interface BootstrapData {
   students: Student[]
   enrollments: Enrollment[]
   scheduleSlots: ScheduleSlot[]
+  teacherLeaves: TeacherLeave[]
   attendanceSessions: AttendanceSession[]
   attendanceRecords: AttendanceRecord[]
   assessmentCategories: AssessmentCategory[]
@@ -195,12 +204,15 @@ export interface BootstrapData {
 }
 
 export type MutationAction =
+  | 'attendance.session.upsert'
   | 'attendance.update'
   | 'submission.update'
   | 'score.update'
   | 'behavior.create'
   | 'assessment.create'
   | 'assessment.update'
+  | 'teacherLeave.create'
+  | 'teacherLeave.update'
   | 'grades.lock'
 
 export interface DomainMutation<T = unknown> {

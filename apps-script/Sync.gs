@@ -1,4 +1,4 @@
-var ACTION_COLLECTION = { 'attendance.update':'attendanceRecords', 'submission.update':'submissions', 'score.update':'scores', 'behavior.create':'behaviorLogs' };
+var ACTION_COLLECTION = { 'attendance.update':'attendanceRecords', 'submission.update':'submissions', 'score.update':'scores', 'behavior.create':'behaviorLogs', 'teacherLeave.create':'teacherLeaves', 'teacherLeave.update':'teacherLeaves' };
 function syncPush_(mutations) {
   if (!Array.isArray(mutations) || mutations.length>50) throw apiError_('BAD_REQUEST','ส่งการเปลี่ยนแปลงได้ครั้งละไม่เกิน 50 รายการ'); var lock=LockService.getScriptLock(); lock.waitLock(30000); var confirmed=[],conflicts=[],failed=[];
   try { mutations.forEach(function(mutation){ try { if (findMutation_(mutation.id)) { confirmed.push(mutation.id); return; } applyMutation_(mutation); logMutation_(mutation); confirmed.push(mutation.id); } catch(error) { if (error.code==='VERSION_CONFLICT') conflicts.push({id:mutation.id,current:error.details.current}); else failed.push({id:mutation.id,code:error.code||'MUTATION_FAILED',message:error.message}); } }); SpreadsheetApp.flush(); } finally { lock.releaseLock(); }
@@ -7,6 +7,7 @@ function syncPush_(mutations) {
 function applyMutation_(mutation) {
   var collection=ACTION_COLLECTION[mutation.action]; var payload=mutation.payload;
   if (collection) { validateMutation_(mutation.action,payload); upsertRecord_(collection,payload,mutation.baseVersion); return; }
+  if (mutation.action==='attendance.session.upsert') { if (!payload.session || !payload.session.id || !Array.isArray(payload.records)) throw apiError_('INVALID_RECORD','ข้อมูลคาบเช็กชื่อไม่ครบ'); upsertRecord_('attendanceSessions',payload.session,mutation.baseVersion); payload.records.forEach(function(record){validateMutation_('attendance.update',record);upsertRecord_('attendanceRecords',record);}); return; }
   if (mutation.action==='assessment.create' || mutation.action==='assessment.update') { var assessment=payload.assessment||payload; upsertRecord_('assessments',assessment,mutation.baseVersion); (payload.targets||[]).forEach(function(target){upsertRecord_('assessmentTargets',target);}); return; }
   if (mutation.action==='grades.lock') { (payload.records||[]).forEach(function(record){upsertRecord_('finalGrades',record);}); return; }
   throw apiError_('UNKNOWN_MUTATION','ไม่รองรับ '+mutation.action);
