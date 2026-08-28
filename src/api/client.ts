@@ -55,8 +55,8 @@ export class ApiClient {
     return this.parse<T>(response)
   }
 
-  setup(includeMock: boolean): Promise<{ installed: boolean; mustChangePin: boolean }> {
-    return this.request('setup', { initialPin: '1234', includeMock })
+  setup(includeMock: boolean): Promise<{ installed: boolean; mustChangePin: boolean; initialPin?: string }> {
+    return this.request('setup', { includeMock })
   }
 
   verifyPin(pin: string): Promise<SessionInfo> {

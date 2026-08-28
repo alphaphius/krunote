@@ -10,14 +10,15 @@ function setupSystem_(payload) {
     Object.keys(ENTITY_SHEETS).forEach(function(key) { ensureEntitySheet_(spreadsheet, ENTITY_SHEETS[key]); });
     ensureEntitySheet_(spreadsheet, 'MutationLog');
     props.setProperty('SCHEMA_VERSION', String(SCHEMA_VERSION));
-    if (!props.getProperty('PIN_HASH')) setPin_((payload && payload.initialPin) || '1234', true);
+    var initialPin='';
+    if (!props.getProperty('PIN_HASH')) { initialPin=randomInitialPin_(); setPin_(initialPin,true); }
     ensureExportFolder_();
     if (payload && payload.includeMock) {
       var students=readAll_('students'); var assessments=readAll_('assessments'); var incomplete=students.length<90 || assessments.length<12;
       if (students.length===0) seedMockData_();
       else if (incomplete && mockOnlyDatabase_()) { clearMockDatabase_(); seedMockData_(); }
     }
-    return { installed: true, mustChangePin: props.getProperty('MUST_CHANGE_PIN') === 'true' };
+    return { installed: true, mustChangePin: props.getProperty('MUST_CHANGE_PIN') === 'true', initialPin:initialPin || undefined };
   } finally { lock.releaseLock(); }
 }
 

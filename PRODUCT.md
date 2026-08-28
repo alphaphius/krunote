@@ -31,7 +31,7 @@ KruNote keeps the whole roster editable from one screen. The teacher records exc
 - Protected student data is fetched only after server authorization.
 - Offline writes are queued, encrypted, idempotent, and server-validated on sync.
 - Export completion is reported only after the background job succeeds.
-- The initial PIN `1234` is setup-only and must be replaced.
+- A random initial PIN is shown once during setup and must be replaced.
 
 ## Capacity target
 

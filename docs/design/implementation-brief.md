@@ -51,7 +51,7 @@ KruNote is a private, single-teacher gradebook and classroom tracking PWA for Th
 ## Access, sensitivity, and audit
 
 - Single-user PIN access is accepted for this private tool.
-- Initial PIN `1234` is setup-only and must be replaced.
+- A random initial PIN is shown once during setup and must be replaced.
 - PIN verification, rate limiting, salted verifier material, and session issuance live in Apps Script.
 - Settings, endpoint changes, export of all data, backup/restore, grade unlock, and destructive maintenance require recent re-authentication.
 - Student names, scores, attendance, behavior notes, and Drive report links are protected data.

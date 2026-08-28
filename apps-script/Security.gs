@@ -1,4 +1,5 @@
 function digest_(value) { return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,value,Utilities.Charset.UTF_8)); }
+function randomInitialPin_() { return String((parseInt(Utilities.getUuid().replace(/-/g,'').slice(0,12),16)%90000000)+10000000); }
 function setPin_(pin,mustChange) { if (!/^\d{4,12}$/.test(String(pin))) throw apiError_('INVALID_PIN','PIN ต้องเป็นตัวเลข 4–12 หลัก'); var salt=Utilities.getUuid(); var props=PropertiesService.getScriptProperties(); props.setProperty('PIN_SALT',salt); props.setProperty('PIN_HASH',digest_(salt+':'+pin)); props.setProperty('MUST_CHANGE_PIN',mustChange ? 'true':'false'); }
 function verifyPin_(pin) {
   var cache=CacheService.getScriptCache(); var block=cache.get('pin-block'); if (block) throw apiError_('RATE_LIMITED','ลอง PIN ผิดหลายครั้ง กรุณารอ 5 นาที'); var props=PropertiesService.getScriptProperties(); if (!props.getProperty('PIN_HASH')) throw apiError_('NOT_INSTALLED','ยังไม่ได้ติดตั้งระบบ');
