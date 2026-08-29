@@ -14,7 +14,7 @@ function setupSystem_(payload) {
     if (!props.getProperty('PIN_HASH')) { initialPin=randomInitialPin_(); setPin_(initialPin,true); }
     ensureExportFolder_();
     if (payload && payload.includeMock) {
-      var students=readAll_('students'); var assessments=readAll_('assessments'); var incomplete=students.length<90 || assessments.length<12;
+      var students=readAll_('students'); var assessments=readAll_('assessments'); var incomplete=students.length<90 || assessments.length<18 || readAll_('attendanceSessions').length<72 || readAll_('teacherLeaves').length<3 || readAll_('behaviorLogs').length<12 || readAll_('finalGrades').length<1;
       if (students.length===0) seedMockData_();
       else if (incomplete && mockOnlyDatabase_()) { clearMockDatabase_(); seedMockData_(); }
     }
@@ -35,6 +35,7 @@ function upsertRecord_(collection, record, expectedVersion) {
   var now = new Date().toISOString(); var next = Object.assign({}, current || {}, record, { version:(current && current.version || 0)+1, createdAt:current && current.createdAt || record.createdAt || now, updatedAt:now }); var row = [[next.id,JSON.stringify(next),next.version,next.updatedAt]];
   if (rowIndex > 0) sheet.getRange(rowIndex,1,1,4).setValues(row); else sheet.appendRow(row[0]); return next;
 }
+function deleteRecord_(collection,id) { var sheet=sheetFor_(collection); if(sheet.getLastRow()<2)return; var values=sheet.getRange(2,1,sheet.getLastRow()-1,1).getValues(); for(var i=values.length-1;i>=0;i--)if(values[i][0]===id)sheet.deleteRow(i+2); }
 function bootstrap_() { var result={ serverTime:new Date().toISOString(), cursor:new Date().toISOString() }; Object.keys(ENTITY_SHEETS).forEach(function(key){ result[key]=readAll_(key); }); return result; }
 function connectionTest_() { var cache=CacheService.getScriptCache(); var marker=Utilities.getUuid(); cache.put('connection-test',marker,30); return { health:true, post:true, roundTrip:cache.get('connection-test')===marker }; }
 function ensureExportFolder_() { var props=PropertiesService.getScriptProperties(); var id=props.getProperty('EXPORT_FOLDER_ID'); if (id) { try { return DriveApp.getFolderById(id); } catch (_) {} } var folder=DriveApp.createFolder('KruNote Reports'); props.setProperty('EXPORT_FOLDER_ID',folder.getId()); return folder; }

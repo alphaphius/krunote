@@ -8,6 +8,8 @@ import type {
   BehaviorLog,
   BootstrapData,
   Enrollment,
+  ExportRequest,
+  FinalGrade,
   GradeLevel,
   GradeThreshold,
   Room,
@@ -20,6 +22,7 @@ import type {
   TeacherLeave,
   Term,
 } from '../domain/types'
+import { gradeFor, weightedTotal } from '../domain/logic'
 
 const firstNames = ['กิตติพงษ์', 'ณัฐชา', 'ปกรณ์', 'ชลธิชา', 'ธนกฤต', 'พิมพ์ชนก', 'ภูริณัฐ', 'วรัญญา', 'ศุภกร', 'สิรินดา', 'อชิรญา', 'กมลชนก', 'นราวิชญ์', 'ปุณณภพ', 'รินรดา']
 const lastNames = ['ใจดี', 'สุขใจ', 'แสงทอง', 'คำดี', 'บุญช่วย', 'วงศ์สวัสดิ์', 'ตั้งใจ', 'ศรีสุข', 'พิพัฒน์กุล', 'พรประเสริฐ', 'สุขเกษม', 'รัตนวงศ์', 'ชูศักดิ์', 'มั่นคง', 'สินสมบูรณ์']
@@ -73,7 +76,11 @@ export function createMockData(): BootstrapData {
     startTime: `${String(8 + (index % 6)).padStart(2, '0')}:30`,
     endTime: `${String(9 + (index % 6)).padStart(2, '0')}:20`,
   }))
-  const teacherLeaves: TeacherLeave[] = [record(`leave-${dateOffset(2)}`, { date: dateOffset(2), substituteName: 'ครูสมชาย ใจดี', substitutePhone: '081-234-5678', reason: 'ลากิจส่วนตัว', note: 'ฝากใบงานไว้ที่ห้องพักครู' })]
+  const teacherLeaves: TeacherLeave[] = [
+    record(`leave-${dateOffset(-11)}`, { date: dateOffset(-11), substituteName: 'ครูสมหญิง แสงดี', substitutePhone: '089-111-2233', reason: 'ลาป่วย', note: 'มอบหมายแบบฝึกหัดทบทวน' }),
+    record(`leave-${dateOffset(3)}`, { date: dateOffset(3), substituteName: 'ครูสมชาย ใจดี', substitutePhone: '081-234-5678', reason: 'ลากิจส่วนตัว', note: 'ฝากใบงานไว้ที่ห้องพักครู' }),
+    record(`leave-${dateOffset(18)}`, { date: dateOffset(18), substituteName: 'ครูกมลชนก ตั้งใจ', substitutePhone: '086-555-0188', reason: 'อบรมพัฒนาวิชาชีพ', note: 'สอนตามแผนการสอนบทที่ 4' }),
+  ]
 
   const attendanceSessions: AttendanceSession[] = []
   const attendanceRecords: AttendanceRecord[] = []
@@ -84,7 +91,7 @@ export function createMockData(): BootstrapData {
       const roster = enrollments.filter((item) => item.teachingGroupId === group.id)
       roster.forEach((enrollment, studentIndex) => {
         const marker = (studentIndex + sessionIndex + groupIndex) % 31
-        const status = marker === 0 ? 'ABSENT' : marker === 7 ? 'LEAVE' : marker === 13 ? 'LATE' : 'PRESENT'
+        const status = studentIndex === 0 && sessionIndex % 4 === 0 ? 'ABSENT' : marker === 0 ? 'ABSENT' : marker === 7 ? 'LEAVE' : marker === 13 ? 'LATE' : 'PRESENT'
         attendanceRecords.push(record(`${sessionId}:${enrollment.studentId}`, { sessionId, studentId: enrollment.studentId, status }))
       })
     }
@@ -111,7 +118,7 @@ export function createMockData(): BootstrapData {
       ['แบบทดสอบย่อย 1', 'QUIZ', 'category-quiz', 10, -18, 'REVIEWED'],
       ['แบบทดสอบย่อย 2', 'QUIZ', 'category-quiz', 10, -6, 'REVIEWING'],
       ['สอบกลางภาค', 'MIDTERM', 'category-midterm', 30, -10, 'REVIEWED'],
-      ['สอบปลายภาค', 'FINAL', 'category-final', 40, 35, 'DRAFT'],
+      ['สอบปลายภาค', 'FINAL', 'category-final', 40, 35, 'REVIEWED'],
     ] as const
     definitions.forEach(([title, type, categoryId, maxScore, dueOffset, status], assessmentIndex) => {
       const assessmentId = `assessment-${grade.code}-${assessmentIndex + 1}`
@@ -132,7 +139,7 @@ export function createMockData(): BootstrapData {
             assessmentId, studentId: enrollment.studentId, status: submissionStatus,
             submittedAt: submissionStatus === 'SUBMITTED' || submissionStatus === 'LATE' ? dateOffset(dueOffset + (late ? 1 : -1)) : undefined,
           }))
-          const shouldHaveScore = status === 'REVIEWED' || (status === 'REVIEWING' && studentIndex < 9)
+          const shouldHaveScore = status === 'REVIEWED' || (status === 'REVIEWING' && studentIndex < 9) || (status === 'DUE' && studentIndex < 6)
           scores.push(record(`${assessmentId}:${enrollment.studentId}`, {
             assessmentId, studentId: enrollment.studentId,
             value: shouldHaveScore && !missing && !exempt ? Math.max(0, maxScore - ((studentIndex * 2 + assessmentIndex) % Math.max(3, Math.floor(maxScore / 2)))) : null,
@@ -142,14 +149,21 @@ export function createMockData(): BootstrapData {
     })
   })
 
-  const behaviorLogs: BehaviorLog[] = [
-    record('behavior-1', { studentId: 'student-1', teachingGroupId: teachingGroups[0].id, occurredAt: now, sentiment: 'POSITIVE', category: 'HELPING', note: 'ช่วยอธิบายวิธีทำให้เพื่อนในกลุ่ม' }),
-    record('behavior-2', { studentId: 'student-5', teachingGroupId: teachingGroups[0].id, occurredAt: now, sentiment: 'FOLLOW_UP', category: 'RESPONSIBILITY', note: 'ยังส่งงานไม่ครบ 2 รายการ' }),
-  ]
+  const behaviorLogs: BehaviorLog[] = teachingGroups.flatMap((group,groupIndex) => {
+    const roster=enrollments.filter((item)=>item.teachingGroupId===group.id)
+    return [
+      record(`behavior-${groupIndex}-positive`, { studentId: roster[1].studentId, teachingGroupId: group.id, occurredAt: dateOffset(-groupIndex), sentiment: 'POSITIVE', category: 'HELPING', note: 'ช่วยอธิบายวิธีทำและแบ่งหน้าที่ในกลุ่มได้ดี' }),
+      record(`behavior-${groupIndex}-follow`, { studentId: roster[4].studentId, teachingGroupId: group.id, occurredAt: dateOffset(-groupIndex-1), sentiment: 'FOLLOW_UP', category: 'RESPONSIBILITY', note: 'ควรติดตามงานที่ยังส่งไม่ครบและการเตรียมอุปกรณ์' }),
+    ]
+  })
 
   const gradeThresholds: GradeThreshold[] = [
     ['4', 80], ['3.5', 75], ['3', 70], ['2.5', 65], ['2', 60], ['1.5', 55], ['1', 50], ['0', 0],
   ].map(([grade, minScore], index) => record(`threshold-${grade}`, { termId: 'term-2569-1', grade: String(grade), minScore: Number(minScore), order: index + 1 }))
+  const finalGrades: FinalGrade[] = teachingGroups.slice(0,2).flatMap((group)=>rosterForMock(group.id).map((studentId)=>{const targetIds=new Set(assessmentTargets.filter((item)=>item.teachingGroupId===group.id).map((item)=>item.assessmentId));const groupAssessments=assessments.filter((item)=>targetIds.has(item.id));const total=weightedTotal(studentId,groupAssessments,assessmentCategories,scores);return record(`final-${group.id}-${studentId}`,{teachingGroupId:group.id,studentId,total,grade:gradeFor(total,gradeThresholds),lockedAt:now})}))
+  const exportRequests: ExportRequest[] = [record('export-sample-1',{format:'PDF',status:'SUCCEEDED',scope:'ROOM',teachingGroupIds:[teachingGroups[0].id],includeBehavior:false,fileName:'KruNote-ตัวอย่าง-ม4-1.pdf',fileUrl:'https://drive.google.com/'})]
+
+  function rosterForMock(groupId:string){return enrollments.filter((item)=>item.teachingGroupId===groupId).map((item)=>item.studentId)}
 
   return {
     serverTime: now,
@@ -173,7 +187,7 @@ export function createMockData(): BootstrapData {
     scores,
     behaviorLogs,
     gradeThresholds,
-    finalGrades: [],
-    exportRequests: [],
+    finalGrades,
+    exportRequests,
   }
 }

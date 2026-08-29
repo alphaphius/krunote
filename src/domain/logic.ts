@@ -9,7 +9,33 @@ import type {
   Student,
   SubmissionRecord,
   TeachingGroup,
+  AttendanceStatus,
 } from './types'
+
+export interface AttendanceSummary {
+  days: number
+  sessions: number
+  totalRecords: number
+  counts: Record<AttendanceStatus, number>
+  presentPercent: number
+  absentPercent: number
+  leavePercent: number
+  frequentAbsences: Array<{ student: Student; absent: number; percent: number }>
+}
+
+export function attendanceSummaryForGroup(data: BootstrapData, teachingGroupId: string): AttendanceSummary {
+  const sessions = data.attendanceSessions.filter((item) => item.teachingGroupId === teachingGroupId)
+  const sessionIds = new Set(sessions.map((item) => item.id))
+  const records = data.attendanceRecords.filter((item) => sessionIds.has(item.sessionId))
+  const counts: Record<AttendanceStatus, number> = { PRESENT: 0, LATE: 0, ABSENT: 0, LEAVE: 0 }
+  records.forEach((item) => { counts[item.status] += 1 })
+  const percent = (value: number) => records.length ? Math.round(value / records.length * 1000) / 10 : 0
+  const frequentAbsences = rosterForGroup(data, teachingGroupId).map((student) => {
+    const absent = records.filter((item) => item.studentId === student.id && item.status === 'ABSENT').length
+    return { student, absent, percent: sessions.length ? Math.round(absent / sessions.length * 1000) / 10 : 0 }
+  }).filter((item) => item.absent > 0).sort((a,b) => b.absent-a.absent || a.student.number-b.student.number).slice(0,5)
+  return { days: new Set(sessions.map((item) => item.date)).size, sessions: sessions.length, totalRecords: records.length, counts, presentPercent: percent(counts.PRESENT + counts.LATE), absentPercent: percent(counts.ABSENT), leavePercent: percent(counts.LEAVE), frequentAbsences }
+}
 
 export function gradeFor(total: number, thresholds: GradeThreshold[]): string {
   return [...thresholds]
@@ -59,7 +85,7 @@ export function reviewProgress(
     const submission = submissions.find((item) => item.assessmentId === assessment.id && item.studentId === studentId)
     const score = scores.find((item) => item.assessmentId === assessment.id && item.studentId === studentId)
     if (submission?.status === 'EXEMPT') reviewed += 1
-    else if (submission && submission.status !== 'MISSING' && score && validateScore(score.value, assessment.maxScore) === null) reviewed += 1
+    else if (submission && submission.status !== 'MISSING' && score?.value !== null && score?.value !== undefined && validateScore(score.value, assessment.maxScore) === null) reviewed += 1
     else if (submission?.status === 'MISSING') reviewed += 1
   }
   return { reviewed, total, complete: total > 0 && reviewed === total }
@@ -71,7 +97,7 @@ export function weightedTotal(
   categories: AssessmentCategory[],
   scores: Score[],
 ): number {
-  const activeAssessments = assessments.filter((assessment) => assessment.status !== 'DRAFT' && assessment.status !== 'ARCHIVED')
+  const activeAssessments = assessments.filter((assessment) => !['DRAFT','OPEN','ARCHIVED'].includes(assessment.status))
   let total = 0
   for (const category of categories) {
     const categoryAssessments = activeAssessments.filter((assessment) => assessment.categoryId === category.id)

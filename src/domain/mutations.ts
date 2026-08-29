@@ -1,5 +1,6 @@
 import type {
   Assessment,
+  AssessmentCategory,
   AssessmentTarget,
   AttendanceRecord,
   AttendanceSession,
@@ -9,7 +10,12 @@ import type {
   Score,
   SubmissionRecord,
   FinalGrade,
+  Enrollment,
+  Room,
+  ScheduleSlot,
+  Student,
   TeacherLeave,
+  TeachingGroup,
 } from './types'
 
 function upsert<T extends { id: string }>(items: T[], record: T): T[] {
@@ -79,6 +85,28 @@ export function applyLocalMutation(data: BootstrapData, mutation: DomainMutation
         }
       }
       return { ...data, assessments: upsert(data.assessments, payload) }
+    }
+    case 'assessmentCategories.replace': {
+      const payload = mutation.payload as { records: AssessmentCategory[]; deletedIds: string[] }
+      const retained = data.assessmentCategories.filter((item) => !payload.deletedIds.includes(item.id))
+      return { ...data, assessmentCategories: payload.records.reduce((items, record) => upsert(items, { ...record, version: record.version + 1, updatedAt: now }), retained) }
+    }
+    case 'room.create': {
+      const payload = mutation.payload as { room: Room; group: TeachingGroup; scheduleSlot?: ScheduleSlot }
+      return {
+        ...data,
+        rooms: upsert(data.rooms, { ...payload.room, version: payload.room.version + 1, updatedAt: now }),
+        teachingGroups: upsert(data.teachingGroups, { ...payload.group, version: payload.group.version + 1, updatedAt: now }),
+        scheduleSlots: payload.scheduleSlot ? upsert(data.scheduleSlots, { ...payload.scheduleSlot, version: payload.scheduleSlot.version + 1, updatedAt: now }) : data.scheduleSlots,
+      }
+    }
+    case 'students.import': {
+      const payload = mutation.payload as { students: Student[]; enrollments: Enrollment[] }
+      return {
+        ...data,
+        students: payload.students.reduce((items, record) => upsert(items, { ...record, version: record.version + 1, updatedAt: now }), data.students),
+        enrollments: payload.enrollments.reduce((items, record) => upsert(items, { ...record, version: record.version + 1, updatedAt: now }), data.enrollments),
+      }
     }
     case 'grades.lock': {
       const payload = mutation.payload as { records: FinalGrade[] }
