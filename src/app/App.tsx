@@ -10,6 +10,7 @@ import { dictionary } from '../i18n/dictionaries'
 import { AppShell } from '../components/AppShell'
 import { SetupPage, UnlockPage, ChangePinPage } from '../pages/AuthPages'
 import { AttendancePage, BehaviorPage, GradebookPage, QuickEditPage, ReportsPage, SchedulePage, SettingsPage, TodayPage, WorkPage } from '../pages/AppPages'
+import { dataForAcademicYear, latestAcademicYearId } from '../domain/logic'
 
 const emptySummary: SyncSummary = { QUEUED: 0, SENDING: 0, RETRY_WAIT: 0, CONFLICT: 0, FAILED: 0, CONFIRMED: 0 }
 type Phase = 'setup' | 'unlock' | 'change-pin' | 'app'
@@ -22,6 +23,7 @@ export default function App() {
   const [endpoint,setEndpoint] = useState(() => localStorage.getItem('krunote.endpoint') || '')
   const [phase,setPhase] = useState<Phase>(() => localStorage.getItem('krunote.endpoint') ? 'unlock' : 'setup')
   const [data,setData] = useState<BootstrapData | null>(null); const [route,setRoute] = useState<AppRoute>('today'); const [demo,setDemo] = useState(false)
+  const [academicYearId,setAcademicYearId] = useState('')
   const [online,setOnline] = useState(navigator.onLine); const [busy,setBusy] = useState(false); const [error,setError] = useState(''); const [cached,setCached] = useState(false); const [syncSummary,setSyncSummary] = useState<SyncSummary>(emptySummary)
   const [initialPin,setInitialPin] = useState(() => sessionStorage.getItem('krunote.initialPin') || '')
   const keyRef = useRef<CryptoKey | null>(null); const sessionRef = useRef<SessionInfo | null>(null); const api = useMemo(() => endpoint && endpoint !== 'demo' ? new ApiClient(endpoint) : null,[endpoint])
@@ -36,7 +38,7 @@ export default function App() {
   const setLocale = (value: Locale) => { localStorage.setItem('krunote.locale',value); setLocaleState(value) }; const setTheme = (value: ThemePreference) => { localStorage.setItem('krunote.theme',value); setThemeState(value) }; const setDensity = (value: 'comfortable'|'compact') => { localStorage.setItem('krunote.density',value); setDensityState(value) }; const setTextSize = (value: 'standard'|'large') => { localStorage.setItem('krunote.textSize',value); setTextSizeState(value) }
 
   const connect = async (rawUrl: string, includeMock: boolean) => { setBusy(true); setError(''); try { const url = normalizeEndpoint(rawUrl); const client = new ApiClient(url); const health = await client.health(); if (!health.installed) { const setup=await client.setup(includeMock); if(setup.initialPin){sessionStorage.setItem('krunote.initialPin',setup.initialPin);setInitialPin(setup.initialPin)} } await client.connectionTest(); localStorage.setItem('krunote.endpoint',url); setEndpoint(url); setPhase('unlock') } catch (cause) { setError(cause instanceof Error ? cause.message : 'เชื่อมต่อไม่สำเร็จ') } finally { setBusy(false) } }
-  const startDemo = () => { const mock = createMockData(); setDemo(true); setData(mock); setEndpoint('demo'); setPhase('app'); setError('') }
+  const startDemo = () => { const mock = createMockData(); setDemo(true); setData(mock); setAcademicYearId(''); setEndpoint('demo'); setPhase('app'); setError('') }
   const unlock = useCallback(async (pin: string) => { setBusy(true); setError(''); try { const key = await createCryptoSession(pin); if (!navigator.onLine && cached) { const local = await loadBootstrap(key); if (!local) throw new Error('PIN ไม่ถูกต้องหรือข้อมูลออฟไลน์เสียหาย'); keyRef.current = key; setData(local); setPhase('app'); return }
     if (!api) throw new Error('ยังไม่ได้เชื่อมต่อ Apps Script'); const session = await api.verifyPin(pin); const remote = await api.bootstrap(session.token); keyRef.current = key; sessionRef.current = session; setData(remote); await saveBootstrap(key,remote); setPhase(session.mustChangePin ? 'change-pin' : 'app')
   } catch (cause) { setError(cause instanceof Error ? cause.message : 'ปลดล็อกไม่สำเร็จ') } finally { setBusy(false) } },[api,cached])
@@ -44,15 +46,17 @@ export default function App() {
   const syncNow = useCallback(async () => { if (demo || !api || !sessionRef.current || !keyRef.current || !navigator.onLine) return; setSyncSummary(await syncOutbox(api,sessionRef.current.token,keyRef.current,setSyncSummary)) },[api,demo])
   useEffect(() => { if (phase !== 'app' || demo) return; const timer = window.setInterval(() => void syncNow(),15000); void syncNow(); return () => clearInterval(timer) },[phase,demo,syncNow])
   const mutate = async (mutation: DomainMutation) => { if (!data) return; const next = applyLocalMutation(data,mutation); setData(next); if (demo) return; if (!keyRef.current) throw new Error('แอปถูกล็อก'); await queueMutation(keyRef.current,mutation); await saveBootstrap(keyRef.current,next); setSyncSummary(await outboxSummary()); if (navigator.onLine) void syncNow() }
-  const lock = () => { sessionRef.current = null; keyRef.current = null; setData(null); setPhase(demo ? 'setup' : 'unlock'); setDemo(false) }
-  const disconnect = () => { void clearProtectedLocalData(); sessionRef.current = null; keyRef.current = null; localStorage.removeItem('krunote.endpoint'); setEndpoint(''); setData(null); setDemo(false); setPhase('setup'); setCached(false) }
+  const lock = () => { sessionRef.current = null; keyRef.current = null; setData(null); setAcademicYearId(''); setPhase(demo ? 'setup' : 'unlock'); setDemo(false) }
+  const disconnect = () => { void clearProtectedLocalData(); sessionRef.current = null; keyRef.current = null; localStorage.removeItem('krunote.endpoint'); setEndpoint(''); setData(null); setAcademicYearId(''); setDemo(false); setPhase('setup'); setCached(false) }
   const requestServerExport = async (payload: unknown) => { if (!api || !sessionRef.current) throw new Error('ต้องออนไลน์และปลดล็อกก่อนสร้างรายงาน'); return api.requestExport(sessionRef.current.token,payload) }
+  const resolvedAcademicYearId=data&&(academicYearId&&data.academicYears.some((item)=>item.id===academicYearId)?academicYearId:latestAcademicYearId(data))||''
+  const viewData=useMemo(()=>data?dataForAcademicYear(data,resolvedAcademicYearId):null,[data,resolvedAcademicYearId])
 
   if (phase === 'setup') return <SetupPage locale={locale} setLocale={setLocale} onConnect={connect} onDemo={startDemo} busy={busy} error={error} />
   if (phase === 'unlock') return <UnlockPage locale={locale} onUnlock={unlock} onBack={() => setPhase('setup')} busy={busy} error={error} hasOffline={cached} initialPin={initialPin} />
   if (phase === 'change-pin') return <ChangePinPage locale={locale} onChangePin={changePin} busy={busy} error={error} />
-  if (!data) return null
-  const context: AppContextValue = { data,locale,theme,density,textSize,route,online,demo,syncSummary,t: (key) => dictionary(locale)[key],navigate:setRoute,mutate,setLocale,setTheme,setDensity,setTextSize,syncNow,lock,disconnect,requestServerExport,updatePin:changePin }
+  if (!data||!viewData) return null
+  const context: AppContextValue = { data:viewData,locale,theme,density,textSize,route,online,demo,syncSummary,academicYearId:resolvedAcademicYearId,t: (key) => dictionary(locale)[key],navigate:setRoute,mutate,setLocale,setTheme,setDensity,setTextSize,setAcademicYearId,syncNow,lock,disconnect,requestServerExport,updatePin:changePin }
   const pages: Record<AppRoute,React.ReactNode> = { today:<TodayPage />, attendance:<AttendancePage />, work:<WorkPage />, 'quick-edit':<QuickEditPage />, schedule:<SchedulePage />, gradebook:<GradebookPage />, behavior:<BehaviorPage />, reports:<ReportsPage />, settings:<SettingsPage /> }
-  return <AppContext.Provider value={context}><AppShell>{pages[route]}</AppShell></AppContext.Provider>
+  return <AppContext.Provider value={context}><AppShell key={resolvedAcademicYearId}>{pages[route]}</AppShell></AppContext.Provider>
 }

@@ -12,7 +12,7 @@ import {
 import { useApp, type AppRoute } from '../app/context'
 import { Brand } from './Brand'
 import { SyncCapsule } from './SyncCapsule'
-import { Button } from './ui'
+import { Button, Select } from './ui'
 
 const allItems: Array<{ route: AppRoute; key: 'today' | 'checkIn' | 'quickEdit' | 'work' | 'schedule' | 'gradebook' | 'behavior' | 'reports' | 'settings'; icon: typeof CalendarDots }> = [
   { route: 'today', key: 'today', icon: CalendarDots },
@@ -33,12 +33,13 @@ function NavButton({ route, label, icon: Icon, active, onClick }: { route: AppRo
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { route, navigate, t, online, demo } = useApp()
+  const { route, navigate, t, online, demo, data, academicYearId, setAcademicYearId } = useApp()
   return (
     <div className="app-root">
       <header className="app-header">
         <Brand title={t('appName')} subtitle={t('tagline')} />
-        <div className="button-row">
+        <div className="button-row app-header-actions">
+          <label className="year-picker"><span>ปีการศึกษา</span><Select aria-label="ปีการศึกษาที่กำลังดู" value={academicYearId} onChange={(event)=>setAcademicYearId(event.target.value)}>{[...data.academicYears].sort((a,b)=>b.startDate.localeCompare(a.startDate)).map((item,index)=><option key={item.id} value={item.id}>{item.name}{index===0?' · ล่าสุด':''}</option>)}</Select></label>
           <span className={`status-badge ${online ? 'success' : 'warning'}`}>{demo ? t('demo') : online ? t('online') : t('offline')}</span>
           <Button variant="ghost" onClick={() => navigate('settings')} aria-label={t('settings')}><Gear /></Button>
         </div>

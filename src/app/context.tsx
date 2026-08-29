@@ -15,6 +15,7 @@ export interface AppContextValue {
   online: boolean
   demo: boolean
   syncSummary: SyncSummary
+  academicYearId: string
   t: (key: TranslationKey) => string
   navigate: (route: AppRoute) => void
   mutate: (mutation: DomainMutation) => Promise<void>
@@ -22,6 +23,7 @@ export interface AppContextValue {
   setTheme: (theme: ThemePreference) => void
   setDensity: (density: 'comfortable' | 'compact') => void
   setTextSize: (size: 'standard' | 'large') => void
+  setAcademicYearId: (id: string) => void
   syncNow: () => Promise<void>
   lock: () => void
   disconnect: () => void

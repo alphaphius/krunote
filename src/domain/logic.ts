@@ -23,6 +23,31 @@ export interface AttendanceSummary {
   frequentAbsences: Array<{ student: Student; absent: number; percent: number }>
 }
 
+export function latestAcademicYearId(data: BootstrapData): string {
+  return [...data.academicYears].sort((a,b)=>b.startDate.localeCompare(a.startDate)||b.name.localeCompare(a.name,'th'))[0]?.id??''
+}
+
+export function dataForAcademicYear(data: BootstrapData, academicYearId: string): BootstrapData {
+  if (!academicYearId) return data
+  const year=data.academicYears.find((item)=>item.id===academicYearId)
+  const terms=data.terms.filter((item)=>item.academicYearId===academicYearId); const termIds=new Set(terms.map((item)=>item.id))
+  const teachingGroups=data.teachingGroups.filter((item)=>termIds.has(item.termId)); const groupIds=new Set(teachingGroups.map((item)=>item.id))
+  const enrollments=data.enrollments.filter((item)=>groupIds.has(item.teachingGroupId)); const studentIds=new Set(enrollments.map((item)=>item.studentId))
+  const attendanceSessions=data.attendanceSessions.filter((item)=>groupIds.has(item.teachingGroupId)); const sessionIds=new Set(attendanceSessions.map((item)=>item.id))
+  const assessments=data.assessments.filter((item)=>termIds.has(item.termId)); const assessmentIds=new Set(assessments.map((item)=>item.id))
+  return {...data,
+    terms,teachingGroups,enrollments,students:data.students.filter((item)=>studentIds.has(item.id)),
+    scheduleSlots:data.scheduleSlots.filter((item)=>groupIds.has(item.teachingGroupId)),
+    teacherLeaves:data.teacherLeaves.filter((item)=>!year||(item.date>=year.startDate&&item.date<=year.endDate)),
+    attendanceSessions,attendanceRecords:data.attendanceRecords.filter((item)=>sessionIds.has(item.sessionId)),
+    assessmentCategories:data.assessmentCategories.filter((item)=>termIds.has(item.termId)),assessments,
+    assessmentTargets:data.assessmentTargets.filter((item)=>assessmentIds.has(item.assessmentId)&&groupIds.has(item.teachingGroupId)),
+    submissions:data.submissions.filter((item)=>assessmentIds.has(item.assessmentId)),scores:data.scores.filter((item)=>assessmentIds.has(item.assessmentId)),
+    behaviorLogs:data.behaviorLogs.filter((item)=>groupIds.has(item.teachingGroupId)),gradeThresholds:data.gradeThresholds.filter((item)=>termIds.has(item.termId)),
+    finalGrades:data.finalGrades.filter((item)=>groupIds.has(item.teachingGroupId)),
+  }
+}
+
 export function scheduleForDate(data: BootstrapData, date: string) {
   const weekday = new Date(`${date}T12:00:00`).getDay()
   if (!Number.isInteger(weekday)) return { weekday: -1, slots: [], groups: [] as TeachingGroup[] }

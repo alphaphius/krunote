@@ -14,7 +14,7 @@ function setupSystem_(payload) {
     if (!props.getProperty('PIN_HASH')) { initialPin=randomInitialPin_(); setPin_(initialPin,true); }
     ensureExportFolder_();
     if (payload && payload.includeMock) {
-      var students=readAll_('students'); var assessments=readAll_('assessments'); var incomplete=students.length<90 || assessments.length<18 || readAll_('attendanceSessions').length<72 || readAll_('teacherLeaves').length<3 || readAll_('behaviorLogs').length<12 || readAll_('finalGrades').length<1;
+      var students=readAll_('students'); var assessments=readAll_('assessments'); var incomplete=readAll_('academicYears').length<2 || readAll_('teachingGroups').length<12 || students.length<90 || assessments.length<21 || readAll_('attendanceSessions').length<100 || readAll_('teacherLeaves').length<4 || readAll_('behaviorLogs').length<12 || readAll_('finalGrades').length<1;
       if (students.length===0) seedMockData_();
       else if (incomplete && mockOnlyDatabase_()) { clearMockDatabase_(); seedMockData_(); }
     }

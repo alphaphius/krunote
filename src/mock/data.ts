@@ -38,8 +38,8 @@ function dateOffset(days: number): string {
 }
 
 export function createMockData(): BootstrapData {
-  const academicYears: AcademicYear[] = [record('year-2569', { name: '2569', startDate: '2026-05-01', endDate: '2027-03-31', active: true })]
-  const terms: Term[] = [record('term-2569-1', { academicYearId: 'year-2569', name: 'ภาคเรียนที่ 1', number: 1, startDate: '2026-05-01', endDate: '2026-10-15', active: true })]
+  const academicYears: AcademicYear[] = [record('year-2568', { name: '2568', startDate: '2025-05-01', endDate: '2026-03-31', active: false }),record('year-2569', { name: '2569', startDate: '2026-05-01', endDate: '2027-03-31', active: true })]
+  const terms: Term[] = [record('term-2568-1', { academicYearId: 'year-2568', name: 'ภาคเรียนที่ 1', number: 1, startDate: '2025-05-01', endDate: '2025-10-15', active: false }),record('term-2569-1', { academicYearId: 'year-2569', name: 'ภาคเรียนที่ 1', number: 1, startDate: '2026-05-01', endDate: '2026-10-15', active: true })]
   const gradeLevels: GradeLevel[] = [4, 5, 6].map((level, index) => record(`grade-${level}`, { code: `M${level}`, name: `ม.${level}`, order: index + 1 }))
   const rooms: Room[] = gradeLevels.flatMap((grade) => [1, 2].map((room) => record(`room-${grade.code}-${room}`, { gradeLevelId: grade.id, code: `${grade.code}/${room}`, name: `${grade.name}/${room}` })))
   const subjects: Subject[] = [record('subject-math', { code: 'ค31101', name: 'คณิตศาสตร์' })]
@@ -162,6 +162,23 @@ export function createMockData(): BootstrapData {
   ].map(([grade, minScore], index) => record(`threshold-${grade}`, { termId: 'term-2569-1', grade: String(grade), minScore: Number(minScore), order: index + 1 }))
   const finalGrades: FinalGrade[] = teachingGroups.slice(0,2).flatMap((group)=>rosterForMock(group.id).map((studentId)=>{const targetIds=new Set(assessmentTargets.filter((item)=>item.teachingGroupId===group.id).map((item)=>item.assessmentId));const groupAssessments=assessments.filter((item)=>targetIds.has(item.id));const total=weightedTotal(studentId,groupAssessments,assessmentCategories,scores);return record(`final-${group.id}-${studentId}`,{teachingGroupId:group.id,studentId,total,grade:gradeFor(total,gradeThresholds),lockedAt:now})}))
   const exportRequests: ExportRequest[] = [record('export-sample-1',{format:'PDF',status:'SUCCEEDED',scope:'ROOM',teachingGroupIds:[teachingGroups[0].id],includeBehavior:false,fileName:'KruNote-ตัวอย่าง-ม4-1.pdf',fileUrl:'https://drive.google.com/'})]
+
+  const currentGroups=[...teachingGroups]
+  const previousGroups=currentGroups.map((current)=>record(`group-2568-${current.roomId}`,{termId:'term-2568-1',gradeLevelId:current.gradeLevelId,roomId:current.roomId,subjectId:current.subjectId,name:current.name}))
+  previousGroups.forEach((previous,index)=>{
+    teachingGroups.push(previous)
+    scheduleSlots.push(record(`schedule-${previous.id}`,{teachingGroupId:previous.id,weekday:(index%5)+1,period:(index%6)+1,startTime:`${String(8+(index%6)).padStart(2,'0')}:30`,endTime:`${String(9+(index%6)).padStart(2,'0')}:20`}))
+    const currentRoster=enrollments.filter((item)=>item.teachingGroupId===currentGroups[index].id)
+    currentRoster.forEach((item)=>enrollments.push(record(`enrollment-${previous.id}-${item.studentId}`,{teachingGroupId:previous.id,studentId:item.studentId})))
+    for(let sessionIndex=0;sessionIndex<5;sessionIndex+=1){const sessionId=`session-${previous.id}-history-${sessionIndex+1}`;const date=`2025-08-${String(4+sessionIndex*7).padStart(2,'0')}`;attendanceSessions.push(record(sessionId,{teachingGroupId:previous.id,date,period:(index%6)+1}));currentRoster.forEach((item,studentIndex)=>attendanceRecords.push(record(`${sessionId}:${item.studentId}`,{sessionId,studentId:item.studentId,status:studentIndex===0&&sessionIndex%2===0?'ABSENT':'PRESENT'})))}
+  })
+  const previousCategories:AssessmentCategory[]=[record('category-2568-work',{termId:'term-2568-1',name:'งานและการบ้าน',weight:40}),record('category-2568-exam',{termId:'term-2568-1',name:'แบบทดสอบและสอบ',weight:60})]
+  assessmentCategories.push(...previousCategories)
+  gradeLevels.forEach((grade)=>{const assessmentId=`assessment-2568-${grade.code}`;assessments.push(record(assessmentId,{termId:'term-2568-1',gradeLevelId:grade.id,subjectId:'subject-math',categoryId:'category-2568-exam',title:'สอบปลายภาค 2568',type:'FINAL',status:'REVIEWED',assignedAt:'2025-09-15',dueAt:'2025-09-30',maxScore:40}));previousGroups.filter((item)=>item.gradeLevelId===grade.id).forEach((previous)=>{assessmentTargets.push(record(`target-${assessmentId}-${previous.id}`,{assessmentId,teachingGroupId:previous.id}));enrollments.filter((item)=>item.teachingGroupId===previous.id).forEach((item,index)=>{submissions.push(record(`${assessmentId}:${item.studentId}`,{assessmentId,studentId:item.studentId,status:'SUBMITTED',submittedAt:'2025-09-30'}));scores.push(record(`${assessmentId}:${item.studentId}`,{assessmentId,studentId:item.studentId,value:Math.max(18,38-index)}))})})})
+  const previousThresholds:GradeThreshold[]=[['4',80],['3.5',75],['3',70],['2.5',65],['2',60],['1.5',55],['1',50],['0',0]].map(([grade,minScore],index)=>record(`threshold-2568-${grade}`,{termId:'term-2568-1',grade:String(grade),minScore:Number(minScore),order:index+1}))
+  gradeThresholds.push(...previousThresholds)
+  teacherLeaves.push(record('leave-2025-08-18',{date:'2025-08-18',substituteName:'ครูสมหญิง แสงดี',substitutePhone:'089-111-2233',reason:'ลาป่วย',note:'ข้อมูลตัวอย่างปี 2568'}))
+  behaviorLogs.push(record('behavior-2568-sample',{studentId:students[0].id,teachingGroupId:previousGroups[0].id,occurredAt:'2025-08-20T03:00:00.000Z',sentiment:'POSITIVE',category:'LEARNING',note:'ตั้งใจเรียนและส่งงานครบในปีการศึกษา 2568'}))
 
   function rosterForMock(groupId:string){return enrollments.filter((item)=>item.teachingGroupId===groupId).map((item)=>item.studentId)}
 
