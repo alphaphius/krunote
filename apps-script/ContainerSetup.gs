@@ -3,6 +3,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('KruNote')
     .addItem('สร้าง/อัปเดตฐานข้อมูล', 'setupKruNote')
+    .addItem('รีเซ็ต PIN เป็น 12345678', 'resetKruNotePin')
     .addToUi();
 }
 
@@ -14,7 +15,7 @@ function onOpen() {
 function setupKruNote() {
   var result = setupSystem_({ includeMock: false });
   var pinMessage = result.initialPin
-    ? '\n\nPIN เริ่มต้น: ' + result.initialPin + '\nกรุณาจด PIN นี้ไว้ ระบบจะแสดงเพียงครั้งเดียวและจะให้เปลี่ยนหลังเข้าแอป'
+    ? '\n\nPIN เริ่มต้น: ' + result.initialPin + '\nสามารถเปลี่ยนภายหลังได้จากหน้า “การตั้งค่า” ในแอป'
     : '';
   SpreadsheetApp.getUi().alert(
     'KruNote พร้อมใช้งาน',
@@ -22,4 +23,20 @@ function setupKruNote() {
     SpreadsheetApp.getUi().ButtonSet.OK
   );
   return result;
+}
+
+/** Reset is deliberately available only from the spreadsheet-bound script UI. */
+function resetKruNotePin() {
+  bindContainerSpreadsheet_();
+  setPin_(DEFAULT_PIN, false);
+  PropertiesService.getScriptProperties().setProperty('PIN_POLICY_VERSION', PIN_POLICY_VERSION);
+  var cache = CacheService.getScriptCache();
+  cache.remove('pin-block');
+  cache.remove('pin-attempts');
+  SpreadsheetApp.getUi().alert(
+    'รีเซ็ต PIN แล้ว',
+    'เข้าแอปด้วย PIN 12345678 และเปลี่ยนรหัสภายหลังได้จากหน้า “การตั้งค่า”',
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
+  return { reset: true };
 }

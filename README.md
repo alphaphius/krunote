@@ -30,7 +30,7 @@ KruNote ใช้ Apps Script ที่ผูกอยู่กับ Google She
 1. เปิด [Google Sheet Template — กดเพื่อทำสำเนา](https://docs.google.com/spreadsheets/d/1uS7TERCyGExk3QTnoZERtAnhi1bdMcdO8hiC5HiKfNQ/copy)
 2. กด **ทำสำเนา** และรอให้ไฟล์ใหม่เปิดใน Google Sheets
 3. รีเฟรชชีตหนึ่งครั้ง จากนั้นเลือก **ส่วนขยาย (Extensions) → Apps Script**
-4. ใน Apps Script เลือกฟังก์ชัน `setupKruNote` แล้วกด **Run** ยืนยันสิทธิ์ด้วยบัญชี Google ที่เป็นเจ้าของชีต จากนั้นจด PIN เริ่มต้นที่แสดงในกล่องข้อความไว้ เพราะจะแสดงเพียงครั้งเดียว
+4. ใน Apps Script เลือกฟังก์ชัน `setupKruNote` แล้วกด **Run** ยืนยันสิทธิ์ด้วยบัญชี Google ที่เป็นเจ้าของชีต PIN เริ่มต้นคือ `12345678`
 5. กลับมาที่ Google Sheet จะเห็นแท็บฐานข้อมูลและ Header `id`, `json`, `version`, `updatedAt` หากเปิดชีตครั้งต่อไป สามารถสั่งซ้ำจากเมนู **KruNote → สร้าง/อัปเดตฐานข้อมูล** ได้โดยข้อมูลเดิมไม่หาย
 6. ใน Apps Script กด **Deploy → New deployment → Web app** ตั้งค่า **Execute as: Me** และ **Who has access: Anyone** แล้วกด Deploy
 7. คัดลอก Web App URL ที่ลงท้ายด้วย `/exec` ไปวางในหน้าเชื่อมต่อของ KruNote แล้วกด **ตรวจและเชื่อมต่อ**
@@ -46,7 +46,7 @@ KruNote ใช้ Apps Script ที่ผูกอยู่กับ Google She
 3. Clone source code
 4. ติดตั้ง dependencies และตรวจ build
 5. สร้าง GitHub repository, เปิด Pages และ push
-6. เปิดแอป ใส่ Web App URL และเปลี่ยน PIN
+6. เปิดแอป ใส่ Web App URL และเข้าใช้ด้วย PIN เริ่มต้น
 
 คำสั่งด้านล่างใช้ placeholder เพื่อไม่ฝังข้อมูลส่วนตัวใน repository ให้เปลี่ยน `YOUR_SOURCE_OWNER` เป็นเจ้าของ source repository ที่ต้องการ clone
 
@@ -129,7 +129,7 @@ npm run verify
 ใช้ขั้นตอน **Copy Google Sheet Template** ด้านบนเป็นวิธีหลัก ไม่ต้องติดตั้ง `clasp` และไม่ต้องใช้คำสั่ง `clasp create`:
 
 1. เปิด Apps Script จากเมนู **ส่วนขยาย** ของ Google Sheet สำเนาเท่านั้น
-2. Run ฟังก์ชัน `setupKruNote` หนึ่งครั้ง ฟังก์ชันนี้จะสร้างเฉพาะแท็บและ Header ที่ขาดใน Spreadsheet สำเนานั้น การรันซ้ำจะไม่ลบแถวเดิม จด PIN เริ่มต้นจากกล่องข้อความไว้
+2. Run ฟังก์ชัน `setupKruNote` หนึ่งครั้ง ฟังก์ชันนี้จะสร้างเฉพาะแท็บและ Header ที่ขาดใน Spreadsheet สำเนานั้น การรันซ้ำจะไม่ลบแถวเดิม PIN เริ่มต้นคือ `12345678`
 3. Deploy เป็น Web app โดยให้ทำงานในนามเจ้าของและอนุญาต `Anyone`
 4. ทดสอบ URL ที่ได้ โดยเปิด `WEB_APP_URL?action=health` ในเบราว์เซอร์ คำตอบควรมี `ok: true`, `storage: "CONTAINER_BOUND_SHEET"` และ `installed: true`
 5. วาง URL `/exec` ใน KruNote ระบบจะตรวจ API, schema และทดสอบเขียน/อ่านก่อนบันทึก URL บนอุปกรณ์
@@ -173,8 +173,8 @@ gh api "repos/$KruNoteRepo/pages" --jq .html_url
 1. เปิด GitHub Pages URL ที่ได้จาก Terminal
 2. วาง Web App URL `/exec` ที่คัดลอกจาก Apps Script
 3. กดตรวจและเชื่อมต่อ
-4. ใส่ PIN เริ่มต้นที่แสดงตอนรัน `setupKruNote`
-5. เปลี่ยน PIN เป็นตัวเลข 6–12 หลักทันที
+4. ใส่ PIN เริ่มต้น `12345678`
+5. หากต้องการเปลี่ยน PIN ให้เปิด **การตั้งค่า → เปลี่ยน PIN** แล้วตั้งรหัสใหม่เป็นตัวเลข 6–12 หลัก
 6. ทดลองสร้างงาน เช็กชื่อ กรอกคะแนน และออก PDF/Excel ก่อนเพิ่มข้อมูลจริง
 
 ## ติดตั้งเป็น PWA
@@ -218,5 +218,6 @@ Apps Script ใช้ Google Sheet Template สำเนาเป็นฐาน
 - ไม่เห็นเมนู KruNote: รีเฟรช Google Sheet แล้วรอสักครู่ จากนั้นเปิดเมนูอีกครั้ง
 - ไม่เห็น Header/แท็บฐานข้อมูล: เปิด **ส่วนขยาย → Apps Script**, เลือก `setupKruNote` แล้ว Run ด้วยบัญชีเจ้าของชีต
 - `CONTAINER_NOT_INITIALIZED` หรือ `installed: false`: กลับไป Run `setupKruNote` จาก Apps Script ที่เปิดผ่าน Google Sheet สำเนา ห้ามใช้ standalone project
+- ลืม PIN หรือ PIN เดิมไม่ผ่าน: กลับไปที่ Google Sheet เลือก **KruNote → รีเซ็ต PIN เป็น 12345678** แล้วเข้าแอปด้วย `12345678`
 - เปิดแอปแล้วค้างที่ตรวจ PIN: รอ Apps Script cold start 10–30 วินาทีแล้วลองใหม่
 - เปลี่ยน Web App URL: ตั้งค่า → ตัดการเชื่อมต่ออุปกรณ์นี้ แล้วเชื่อมใหม่

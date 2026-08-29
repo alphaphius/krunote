@@ -11,7 +11,11 @@ function setupSystem_(payload) {
     ensureEntitySheet_(spreadsheet, 'MutationLog');
     props.setProperty('SCHEMA_VERSION', String(SCHEMA_VERSION));
     var initialPin='';
-    if (!props.getProperty('PIN_HASH')) { initialPin=randomInitialPin_(); setPin_(initialPin,true); }
+    if (!props.getProperty('PIN_HASH') || props.getProperty('PIN_POLICY_VERSION') !== PIN_POLICY_VERSION) {
+      initialPin=DEFAULT_PIN;
+      setPin_(initialPin,false);
+      props.setProperty('PIN_POLICY_VERSION',PIN_POLICY_VERSION);
+    }
     ensureExportFolder_();
     if (payload && payload.includeMock) {
       var students=readAll_('students'); var assessments=readAll_('assessments'); var incomplete=readAll_('academicYears').length<2 || readAll_('teachingGroups').length<12 || students.length<90 || assessments.length<21 || readAll_('attendanceSessions').length<100 || readAll_('teacherLeaves').length<4 || readAll_('behaviorLogs').length<12 || readAll_('finalGrades').length<1;
