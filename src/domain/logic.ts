@@ -23,6 +23,19 @@ export interface AttendanceSummary {
   frequentAbsences: Array<{ student: Student; absent: number; percent: number }>
 }
 
+export function scheduleForDate(data: BootstrapData, date: string) {
+  const weekday = new Date(`${date}T12:00:00`).getDay()
+  if (!Number.isInteger(weekday)) return { weekday: -1, slots: [], groups: [] as TeachingGroup[] }
+  const slots = data.scheduleSlots.filter((item) => item.weekday === weekday).sort((a,b) => a.period-b.period || a.startTime.localeCompare(b.startTime))
+  const groupIds = new Set(slots.map((item) => item.teachingGroupId))
+  const groups = data.teachingGroups.filter((item) => groupIds.has(item.id)).sort((a,b) => {
+    const aPeriod = slots.find((slot) => slot.teachingGroupId === a.id)?.period ?? 99
+    const bPeriod = slots.find((slot) => slot.teachingGroupId === b.id)?.period ?? 99
+    return aPeriod-bPeriod || a.name.localeCompare(b.name,'th')
+  })
+  return { weekday, slots, groups }
+}
+
 export function attendanceSummaryForGroup(data: BootstrapData, teachingGroupId: string): AttendanceSummary {
   const sessions = data.attendanceSessions.filter((item) => item.teachingGroupId === teachingGroupId)
   const sessionIds = new Set(sessions.map((item) => item.id))

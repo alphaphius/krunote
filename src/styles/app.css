@@ -134,6 +134,8 @@ a { color: inherit; }
 .score-label { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); color: var(--color-text-muted); font-size: .875rem; }
 .attendance-table { min-width: 34rem; }
 .attendance-overview, .attendance-insight, .attendance-entry { margin-bottom: var(--space-4); }
+.attendance-filters { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.schedule-hint { display: grid; gap: var(--space-1); margin-bottom: var(--space-4); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-input); background: var(--color-surface-muted); }
 .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
 .section-head h2, .section-head p { margin: 0; }
 .attendance-room-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--space-3); }
@@ -229,6 +231,7 @@ a { color: inherit; }
   .leave-details { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .attendance-room-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .attendance-filters { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .sync-capsule { bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
 }
 
@@ -236,7 +239,7 @@ a { color: inherit; }
   .app-header { padding-inline: var(--space-3); }
   .app-header .brand-subtitle { display: none; }
   .main { padding: var(--space-3); padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
-  .field-row, .filters { grid-template-columns: 1fr; }
+  .field-row, .filters, .attendance-filters { grid-template-columns: 1fr; }
   .summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .table-wrap { display: none; }
   .mobile-roster { display: grid; gap: var(--space-2); }
