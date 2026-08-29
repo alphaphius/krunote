@@ -23,17 +23,30 @@ KruNote คือ PWA ส่วนตัวสำหรับครูมัธ�
 
 รองรับ Chrome, Edge และ Safari รุ่นปัจจุบันบน macOS, Windows, iPhone, iPad และ Android การติดตั้งเป็นแอปต้องเปิดผ่าน HTTPS ซึ่ง GitHub Pages จัดให้โดยอัตโนมัติ
 
+## เริ่มใช้งานแบบแนะนำ: Copy Google Sheet Template
+
+KruNote ใช้ Apps Script ที่ผูกอยู่กับ Google Sheet Template โดยตรง ระบบจะสร้างแท็บฐานข้อมูลและ Header ในไฟล์ที่คุณคัดลอกมา และจะไม่สร้างไฟล์ Spreadsheet ฐานข้อมูลแยกอีกไฟล์
+
+1. เปิด [Google Sheet Template — กดเพื่อทำสำเนา](https://docs.google.com/spreadsheets/d/1uS7TERCyGExk3QTnoZERtAnhi1bdMcdO8hiC5HiKfNQ/copy)
+2. กด **ทำสำเนา** และรอให้ไฟล์ใหม่เปิดใน Google Sheets
+3. รีเฟรชชีตหนึ่งครั้ง จากนั้นเลือก **ส่วนขยาย (Extensions) → Apps Script**
+4. ใน Apps Script เลือกฟังก์ชัน `setupKruNote` แล้วกด **Run** ยืนยันสิทธิ์ด้วยบัญชี Google ที่เป็นเจ้าของชีต จากนั้นจด PIN เริ่มต้นที่แสดงในกล่องข้อความไว้ เพราะจะแสดงเพียงครั้งเดียว
+5. กลับมาที่ Google Sheet จะเห็นแท็บฐานข้อมูลและ Header `id`, `json`, `version`, `updatedAt` หากเปิดชีตครั้งต่อไป สามารถสั่งซ้ำจากเมนู **KruNote → สร้าง/อัปเดตฐานข้อมูล** ได้โดยข้อมูลเดิมไม่หาย
+6. ใน Apps Script กด **Deploy → New deployment → Web app** ตั้งค่า **Execute as: Me** และ **Who has access: Anyone** แล้วกด Deploy
+7. คัดลอก Web App URL ที่ลงท้ายด้วย `/exec` ไปวางในหน้าเชื่อมต่อของ KruNote แล้วกด **ตรวจและเชื่อมต่อ**
+
+ห้ามสร้าง Apps Script แบบ standalone สำหรับฐานข้อมูลหลัก เพราะสคริปต์ต้องทราบว่า Google Sheet สำเนาใดเป็นเจ้าของข้อมูล หากต้องการข้อมูลจำลอง ให้เลือกตัวเลือกข้อมูลตัวอย่างตอนเชื่อมต่อครั้งแรก
+
 ## ภาพรวมการติดตั้งผ่าน Terminal
 
 ลำดับทั้งหมดคือ:
 
-1. ติดตั้ง Git, GitHub CLI, Node.js และ Google clasp
-2. Login GitHub และ Google
+1. คัดลอก Google Sheet Template และ Deploy Apps Script ที่ผูกกับชีต
+2. ติดตั้ง Git, GitHub CLI และ Node.js
 3. Clone source code
 4. ติดตั้ง dependencies และตรวจ build
-5. สร้าง Apps Script project, deploy API และสร้างฐานข้อมูล
-6. สร้าง GitHub repository, เปิด Pages และ push
-7. เปิดแอป ใส่ Web App URL และเปลี่ยน PIN
+5. สร้าง GitHub repository, เปิด Pages และ push
+6. เปิดแอป ใส่ Web App URL และเปลี่ยน PIN
 
 คำสั่งด้านล่างใช้ placeholder เพื่อไม่ฝังข้อมูลส่วนตัวใน repository ให้เปลี่ยน `YOUR_SOURCE_OWNER` เป็นเจ้าของ source repository ที่ต้องการ clone
 
@@ -44,12 +57,10 @@ KruNote คือ PWA ส่วนตัวสำหรับครูมัธ�
 ```bash
 xcode-select --install
 brew install git gh node
-npm install --global @google/clasp
 git --version
 gh --version
 node --version
 npm --version
-clasp --version
 ```
 
 หาก `xcode-select` แจ้งว่าติดตั้งแล้ว สามารถข้ามข้อความนั้นได้
@@ -67,32 +78,27 @@ winget install --id OpenJS.NodeJS.LTS --exact
 ปิดและเปิด Windows Terminal ใหม่ แล้วรัน:
 
 ```powershell
-npm install --global @google/clasp
 git --version
 gh --version
 node --version
 npm --version
-clasp --version
 ```
 
-## Login GitHub และ Google
+## Login GitHub
 
 ใช้ได้เหมือนกันทั้ง macOS Terminal และ Windows PowerShell:
 
 ```text
 gh auth login
-clasp login
 ```
 
-สำหรับ GitHub ให้เลือก `GitHub.com` → `HTTPS` → `Login with a web browser` แล้วกรอกรหัสอุปกรณ์ในหน้าเว็บ สำหรับ Google ให้ยืนยันบัญชีที่เป็นเจ้าของ Spreadsheet/Drive ห้ามกรอกรหัสผ่านหรือ token ลงในไฟล์ของโครงการ
+เลือก `GitHub.com` → `HTTPS` → `Login with a web browser` แล้วกรอกรหัสอุปกรณ์ในหน้าเว็บ ส่วนการยืนยันบัญชี Google จะเกิดขึ้นตอนรัน `setupKruNote` และตอน Deploy Web app ในหน้า Apps Script ห้ามกรอกรหัสผ่านหรือ token ลงในไฟล์ของโครงการ
 
 ตรวจสถานะหลัง Login:
 
 ```text
 gh auth status
 ```
-
-`clasp login` จะแจ้งทันทีหากบัญชี Google เชื่อมอยู่แล้ว ส่วนสถานะไฟล์ใน Apps Script project ตรวจได้ภายหลังด้วย `clasp status`
 
 ## Clone Git และเตรียมโครงการ
 
@@ -118,42 +124,17 @@ npm run verify
 
 ผลที่ถูกต้องคือ tests ผ่าน, production build สำเร็จ และข้อความ `Verified 5 release files and PWA metadata.`
 
-## สร้างและ Deploy Google Apps Script ผ่าน Terminal
+## สร้าง Header และ Deploy Google Apps Script
 
-คำสั่งชุดนี้สร้าง Apps Script แบบ standalone และบันทึก Script ID ไว้ใน `.clasp.json` เฉพาะเครื่อง ไฟล์นี้ถูก ignore และต้องไม่ commit
+ใช้ขั้นตอน **Copy Google Sheet Template** ด้านบนเป็นวิธีหลัก ไม่ต้องติดตั้ง `clasp` และไม่ต้องใช้คำสั่ง `clasp create`:
 
-```text
-clasp create --type standalone --title "KruNote API" --rootDir apps-script
-clasp push --force
-clasp deploy --description "KruNote initial deployment"
-clasp deployments
-```
+1. เปิด Apps Script จากเมนู **ส่วนขยาย** ของ Google Sheet สำเนาเท่านั้น
+2. Run ฟังก์ชัน `setupKruNote` หนึ่งครั้ง ฟังก์ชันนี้จะสร้างเฉพาะแท็บและ Header ที่ขาดใน Spreadsheet สำเนานั้น การรันซ้ำจะไม่ลบแถวเดิม จด PIN เริ่มต้นจากกล่องข้อความไว้
+3. Deploy เป็น Web app โดยให้ทำงานในนามเจ้าของและอนุญาต `Anyone`
+4. ทดสอบ URL ที่ได้ โดยเปิด `WEB_APP_URL?action=health` ในเบราว์เซอร์ คำตอบควรมี `ok: true`, `storage: "CONTAINER_BOUND_SHEET"` และ `installed: true`
+5. วาง URL `/exec` ใน KruNote ระบบจะตรวจ API, schema และทดสอบเขียน/อ่านก่อนบันทึก URL บนอุปกรณ์
 
-คัดลอก Deployment ID ที่ขึ้นต้นด้วย `AKfy...` จากผลลัพธ์ แล้วสร้าง Web App URL
-
-### macOS Terminal
-
-```bash
-export KRUNOTE_DEPLOYMENT_ID="PASTE_DEPLOYMENT_ID_HERE"
-export KRUNOTE_WEB_APP_URL="https://script.google.com/macros/s/$KRUNOTE_DEPLOYMENT_ID/exec"
-curl -L "$KRUNOTE_WEB_APP_URL?action=health"
-npm run initialize:api -- "$KRUNOTE_WEB_APP_URL" --mock
-```
-
-### Windows PowerShell
-
-```powershell
-$KruNoteDeploymentId = "PASTE_DEPLOYMENT_ID_HERE"
-$KruNoteWebAppUrl = "https://script.google.com/macros/s/$KruNoteDeploymentId/exec"
-Invoke-RestMethod -Uri "$KruNoteWebAppUrl?action=health"
-npm run initialize:api -- "$KruNoteWebAppUrl" --mock
-```
-
-`--mock` จะสร้างนักเรียนจำลอง 90 คน หากจะเริ่มด้วยฐานข้อมูลว่าง ให้ตัด `--mock` ออก ระบบจะแสดง PIN เริ่มต้นแบบสุ่มเพียงครั้งเดียว ให้จดไว้และเปลี่ยนทันทีเมื่อเข้าแอป
-
-ผล health ที่ถูกต้องต้องมี `ok: true`, `apiVersion: 1.0.0` และ `installed: true` หลัง initialize สำเร็จ
-
-> Web App เปิด endpoint แบบ Anyone เพื่อให้ GitHub Pages เรียกได้ แต่การอ่านและเขียนข้อมูลต้องผ่าน PIN session แบบหมดอายุ มี rate limit และข้อมูลออฟไลน์เข้ารหัสแล้ว ควรเก็บ Web App URL และ PIN เป็นส่วนตัว
+Web App เปิด endpoint แบบ Anyone เพื่อให้ GitHub Pages เรียกได้ แต่ข้อมูลต้องผ่าน PIN session แบบหมดอายุ มี rate limit และข้อมูลออฟไลน์เข้ารหัสแล้ว ควรเก็บ Web App URL และ PIN เป็นส่วนตัว
 
 ## สร้าง GitHub Repository และเปิด Pages ผ่าน Terminal
 
@@ -190,9 +171,9 @@ gh api "repos/$KruNoteRepo/pages" --jq .html_url
 ## เปิดใช้งานครั้งแรก
 
 1. เปิด GitHub Pages URL ที่ได้จาก Terminal
-2. วาง `KRUNOTE_WEB_APP_URL` หรือ `$KruNoteWebAppUrl`
+2. วาง Web App URL `/exec` ที่คัดลอกจาก Apps Script
 3. กดตรวจและเชื่อมต่อ
-4. ใส่ PIN เริ่มต้นที่แสดงจาก `initialize:api`
+4. ใส่ PIN เริ่มต้นที่แสดงตอนรัน `setupKruNote`
 5. เปลี่ยน PIN เป็นตัวเลข 6–12 หลักทันที
 6. ทดลองสร้างงาน เช็กชื่อ กรอกคะแนน และออก PDF/Excel ก่อนเพิ่มข้อมูลจริง
 
@@ -216,25 +197,11 @@ git push origin main
 gh run watch --exit-status
 ```
 
-อัปเดต Apps Script โดยใช้ Deployment ID เดิม เพื่อให้ Web App URL ไม่เปลี่ยน:
-
-```text
-clasp push --force
-clasp deployments
-clasp deploy --deploymentId PASTE_EXISTING_DEPLOYMENT_ID --description "KruNote update"
-```
-
-หรือใช้คำสั่งช่วยที่มีในโครงการ:
-
-```text
-npm run deploy:web
-npm run deploy:api
-npm run status
-```
+ถ้าแก้โค้ด Apps Script ใน Google Sheet สำเนา ให้เปิด **Deploy → Manage deployments → Edit** เลือก **New version** แล้ว Deploy ทับรายการเดิม วิธีนี้ทำให้ Web App URL เดิมไม่เปลี่ยน
 
 ## โครงสร้างข้อมูลและการสำรอง
 
-Apps Script สร้าง Spreadsheet `KruNote Data` พร้อมชีตสำหรับปีการศึกษา ภาคเรียน ระดับ ห้อง นักเรียน ตารางสอน การเข้าเรียน งาน เป้าหมายห้อง การส่ง คะแนน พฤติกรรม เกณฑ์เกรด ผลเกรด งานส่งออก และ mutation log
+Apps Script ใช้ Google Sheet Template สำเนาเป็นฐานข้อมูล และสร้างแท็บภายในไฟล์นั้นสำหรับปีการศึกษา ภาคเรียน ระดับ ห้อง นักเรียน ตารางสอน การเข้าเรียน งาน เป้าหมายห้อง การส่ง คะแนน พฤติกรรม เกณฑ์เกรด ผลเกรด งานส่งออก และ mutation log โดยไม่สร้าง Spreadsheet ฐานข้อมูลไฟล์ใหม่
 
 - สำรองโดยทำสำเนา Spreadsheet และโฟลเดอร์ `KruNote Reports` ใน Drive
 - ใช้ข้อมูลจำลองในการสาธิตหรือทดสอบเสมอ
@@ -245,10 +212,11 @@ Apps Script สร้าง Spreadsheet `KruNote Data` พร้อมชีต�
 
 - `command not found`: ปิดและเปิด Terminal ใหม่ แล้วตรวจด้วยคำสั่ง `--version`
 - `gh auth status` ไม่ผ่าน: รัน `gh auth login` ใหม่
-- `clasp` เข้า Google ไม่ได้: รัน `clasp logout` แล้ว `clasp login`
 - `Repository already exists`: เปลี่ยนชื่อใน `gh repo create` หรือใช้ repository ที่มีอยู่แล้วและเพิ่ม remote ด้วย `git remote add origin URL`
 - Pages workflow ไม่เริ่ม: รัน `gh workflow run deploy-pages.yml`
 - `/exec` พาไปหน้า Login: ตรวจว่า deployment ใช้ manifest รุ่นล่าสุดและ Web App อนุญาต Anyone
-- `installed: false`: รัน `npm run initialize:api -- "WEB_APP_URL" --mock`
+- ไม่เห็นเมนู KruNote: รีเฟรช Google Sheet แล้วรอสักครู่ จากนั้นเปิดเมนูอีกครั้ง
+- ไม่เห็น Header/แท็บฐานข้อมูล: เปิด **ส่วนขยาย → Apps Script**, เลือก `setupKruNote` แล้ว Run ด้วยบัญชีเจ้าของชีต
+- `CONTAINER_NOT_INITIALIZED` หรือ `installed: false`: กลับไป Run `setupKruNote` จาก Apps Script ที่เปิดผ่าน Google Sheet สำเนา ห้ามใช้ standalone project
 - เปิดแอปแล้วค้างที่ตรวจ PIN: รอ Apps Script cold start 10–30 วินาทีแล้วลองใหม่
 - เปลี่ยน Web App URL: ตั้งค่า → ตัดการเชื่อมต่ออุปกรณ์นี้ แล้วเชื่อมใหม่

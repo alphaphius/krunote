@@ -34,7 +34,7 @@ function route_(action, payload, token) {
 }
 
 function health_() {
-  return { apiVersion: API_VERSION, schemaVersion: SCHEMA_VERSION, installed: !!PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID'), serverTime: new Date().toISOString() };
+  return { apiVersion: API_VERSION, schemaVersion: SCHEMA_VERSION, installed: !!PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID'), storage: 'CONTAINER_BOUND_SHEET', serverTime: new Date().toISOString() };
 }
 
 function output_(ok, data, requestId) {
