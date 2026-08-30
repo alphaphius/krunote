@@ -9,6 +9,7 @@
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
     <title>KruNote — ผู้ช่วยครูส่วนตัว</title>
+    <script src="%BASE_URL%config.js"></script>
     <script>
       (() => {
         const preference = localStorage.getItem('krunote.theme') || 'system'
@@ -21,7 +22,6 @@
   <body>
     <div id="root"></div>
     <noscript>กรุณาเปิด JavaScript เพื่อใช้งาน KruNote</noscript>
-    <script src="%BASE_URL%config.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

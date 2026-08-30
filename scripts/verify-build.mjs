@@ -5,6 +5,7 @@ const required = ['dist/index.html','dist/config.js','dist/manifest.webmanifest'
 await Promise.all(required.map((file) => access(file,constants.R_OK)))
 const html = await readFile('dist/index.html','utf8')
 if (!html.includes('manifest.webmanifest') || !html.includes('config.js') || !html.includes('KruNote')) throw new Error('Build is missing PWA metadata or runtime config')
+if (html.indexOf('config.js') > html.indexOf('type="module"')) throw new Error('Runtime config must load before the application bundle')
 const runtimeConfig = await readFile('dist/config.js','utf8')
 if (!runtimeConfig.includes('__KRUNOTE_CONFIG__')) throw new Error('Runtime config is malformed')
 const manifest = JSON.parse(await readFile('dist/manifest.webmanifest','utf8'))
