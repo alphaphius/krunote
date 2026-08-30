@@ -20,10 +20,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Create runtime config
-        run: npm run config:runtime
-        env:
-          KRUNOTE_WEB_APP_URL: ${{ secrets.KRUNOTE_WEB_APP_URL }}
       - run: npm run verify
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

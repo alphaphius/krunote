@@ -33,7 +33,7 @@ KruNote ใช้ Apps Script ที่ผูกอยู่กับ Google She
 4. ใน Apps Script เลือกฟังก์ชัน `setupKruNote` แล้วกด **Run** ยืนยันสิทธิ์ด้วยบัญชี Google ที่เป็นเจ้าของชีต PIN เริ่มต้นคือ `12345678`
 5. กลับมาที่ Google Sheet จะเห็นแท็บฐานข้อมูลและ Header `id`, `json`, `version`, `updatedAt` หากเปิดชีตครั้งต่อไป สามารถสั่งซ้ำจากเมนู **KruNote → สร้าง/อัปเดตฐานข้อมูล** ได้โดยข้อมูลเดิมไม่หาย
 6. ใน Apps Script กด **Deploy → New deployment → Web app** ตั้งค่า **Execute as: Me** และ **Who has access: Anyone** แล้วกด Deploy
-7. คัดลอก Web App URL ที่ลงท้ายด้วย `/exec` แล้วบันทึกเป็น GitHub Actions Secret ชื่อ `KRUNOTE_WEB_APP_URL` ตามหัวข้อ Runtime Config ด้านล่าง แอปที่ Deploy แล้วจะเปิดหน้า PIN โดยอัตโนมัติ
+7. คัดลอก Web App URL ที่ลงท้ายด้วย `/exec` ไปใส่ใน `public/config.js` ตามหัวข้อ Runtime Config ด้านล่าง แอปที่ Deploy แล้วจะเปิดหน้า PIN โดยอัตโนมัติ
 
 ห้ามสร้าง Apps Script แบบ standalone สำหรับฐานข้อมูลหลัก เพราะสคริปต์ต้องทราบว่า Google Sheet สำเนาใดเป็นเจ้าของข้อมูล หากต้องการข้อมูลจำลอง ให้เลือกตัวเลือกข้อมูลตัวอย่างตอนเชื่อมต่อครั้งแรก
 
@@ -138,22 +138,15 @@ Web App เปิด endpoint แบบ Anyone เพื่อให้ GitHub P
 
 ## ตั้ง Web App URL ผ่าน Runtime Config
 
-ไฟล์ [public/config.js](public/config.js) เป็น Config กลางของแอป หาก `webAppUrl` มีค่า KruNote จะข้ามหน้าใส่ Web App URL และเปิดหน้า PIN ทันที Repository เก็บไฟล์นี้เป็นค่าว่างเพื่อไม่ผูกฐานข้อมูลของเจ้าของ Template เข้ากับผู้ใช้รายอื่น
+ไฟล์ [public/config.js](public/config.js) เป็น Config กลางของแอป หาก `webAppUrl` มีค่า KruNote จะข้ามหน้าใส่ Web App URL และเปิดหน้า PIN ทันที แก้ URL ได้โดยเปิดไฟล์แล้วเปลี่ยนเฉพาะค่า `webAppUrl`:
 
-สำหรับ GitHub Pages ให้เก็บ URL จริงใน GitHub Actions Secret จาก Terminal:
-
-```text
-gh secret set KRUNOTE_WEB_APP_URL --body "PASTE_WEB_APP_URL_ENDING_WITH_EXEC"
+```javascript
+window.__KRUNOTE_CONFIG__ = Object.freeze({
+  webAppUrl: 'PASTE_WEB_APP_URL_ENDING_WITH_EXEC',
+})
 ```
 
-จากนั้นรัน workflow ใหม่:
-
-```text
-gh workflow run deploy-pages.yml
-gh run watch --exit-status
-```
-
-Workflow จะสร้าง `config.js` จาก Secret ก่อน build โดย URL จริงจะไม่ถูก commit ลง repository หากไม่ได้ตั้ง Secret หรือ Config ว่าง แอปจะกลับไปแสดงหน้ากรอก URL แบบเดิมเพื่อให้ตั้งค่าด้วยตนเอง
+จากนั้นรัน `npm run verify`, commit และ push เพื่อ Deploy ใหม่ URL ใน Config มองเห็นได้จาก repository และหน้าเว็บที่ build แล้ว จึงต้องใช้ PIN ที่คาดเดายากเพื่อป้องกันข้อมูล ผู้ที่ clone หรือ fork repository ต้องเปลี่ยน URL นี้เป็น deployment ของตัวเองก่อนใช้งาน
 
 ## สร้าง GitHub Repository และเปิด Pages ผ่าน Terminal
 
@@ -232,7 +225,7 @@ Apps Script ใช้ Google Sheet Template สำเนาเป็นฐาน
 - `gh auth status` ไม่ผ่าน: รัน `gh auth login` ใหม่
 - `Repository already exists`: เปลี่ยนชื่อใน `gh repo create` หรือใช้ repository ที่มีอยู่แล้วและเพิ่ม remote ด้วย `git remote add origin URL`
 - Pages workflow ไม่เริ่ม: รัน `gh workflow run deploy-pages.yml`
-- แอปยังถาม Web App URL: ตรวจว่ามี Secret ชื่อ `KRUNOTE_WEB_APP_URL`, ค่า URL ลงท้าย `/exec` และ Deploy Pages ใหม่แล้ว
+- แอปยังถาม Web App URL: ตรวจค่า `webAppUrl` ใน `public/config.js` ว่าลงท้าย `/exec` แล้ว commit, push และรอ Pages Deploy ใหม่
 - `/exec` พาไปหน้า Login: ตรวจว่า deployment ใช้ manifest รุ่นล่าสุดและ Web App อนุญาต Anyone
 - ไม่เห็นเมนู KruNote: รีเฟรช Google Sheet แล้วรอสักครู่ จากนั้นเปิดเมนูอีกครั้ง
 - ไม่เห็น Header/แท็บฐานข้อมูล: เปิด **ส่วนขยาย → Apps Script**, เลือก `setupKruNote` แล้ว Run ด้วยบัญชีเจ้าของชีต
