@@ -33,7 +33,7 @@ KruNote ใช้ Apps Script ที่ผูกอยู่กับ Google She
 4. ใน Apps Script เลือกฟังก์ชัน `setupKruNote` แล้วกด **Run** ยืนยันสิทธิ์ด้วยบัญชี Google ที่เป็นเจ้าของชีต PIN เริ่มต้นคือ `12345678`
 5. กลับมาที่ Google Sheet จะเห็นแท็บฐานข้อมูลและ Header `id`, `json`, `version`, `updatedAt` หากเปิดชีตครั้งต่อไป สามารถสั่งซ้ำจากเมนู **KruNote → สร้าง/อัปเดตฐานข้อมูล** ได้โดยข้อมูลเดิมไม่หาย
 6. ใน Apps Script กด **Deploy → New deployment → Web app** ตั้งค่า **Execute as: Me** และ **Who has access: Anyone** แล้วกด Deploy
-7. คัดลอก Web App URL ที่ลงท้ายด้วย `/exec` ไปวางในหน้าเชื่อมต่อของ KruNote แล้วกด **ตรวจและเชื่อมต่อ**
+7. คัดลอก Web App URL ที่ลงท้ายด้วย `/exec` แล้วบันทึกเป็น GitHub Actions Secret ชื่อ `KRUNOTE_WEB_APP_URL` ตามหัวข้อ Runtime Config ด้านล่าง แอปที่ Deploy แล้วจะเปิดหน้า PIN โดยอัตโนมัติ
 
 ห้ามสร้าง Apps Script แบบ standalone สำหรับฐานข้อมูลหลัก เพราะสคริปต์ต้องทราบว่า Google Sheet สำเนาใดเป็นเจ้าของข้อมูล หากต้องการข้อมูลจำลอง ให้เลือกตัวเลือกข้อมูลตัวอย่างตอนเชื่อมต่อครั้งแรก
 
@@ -46,7 +46,7 @@ KruNote ใช้ Apps Script ที่ผูกอยู่กับ Google She
 3. Clone source code
 4. ติดตั้ง dependencies และตรวจ build
 5. สร้าง GitHub repository, เปิด Pages และ push
-6. เปิดแอป ใส่ Web App URL และเข้าใช้ด้วย PIN เริ่มต้น
+6. เปิดแอปและเข้าใช้ด้วย PIN เริ่มต้น โดย URL จะมาจาก Runtime Config
 
 คำสั่งด้านล่างใช้ placeholder เพื่อไม่ฝังข้อมูลส่วนตัวใน repository ให้เปลี่ยน `YOUR_SOURCE_OWNER` เป็นเจ้าของ source repository ที่ต้องการ clone
 
@@ -122,7 +122,7 @@ npm ci
 npm run verify
 ```
 
-ผลที่ถูกต้องคือ tests ผ่าน, production build สำเร็จ และข้อความ `Verified 5 release files and PWA metadata.`
+ผลที่ถูกต้องคือ tests ผ่าน, production build สำเร็จ และข้อความ `Verified 6 release files and PWA metadata.`
 
 ## สร้าง Header และ Deploy Google Apps Script
 
@@ -132,9 +132,28 @@ npm run verify
 2. Run ฟังก์ชัน `setupKruNote` หนึ่งครั้ง ฟังก์ชันนี้จะสร้างเฉพาะแท็บและ Header ที่ขาดใน Spreadsheet สำเนานั้น การรันซ้ำจะไม่ลบแถวเดิม PIN เริ่มต้นคือ `12345678`
 3. Deploy เป็น Web app โดยให้ทำงานในนามเจ้าของและอนุญาต `Anyone`
 4. ทดสอบ URL ที่ได้ โดยเปิด `WEB_APP_URL?action=health` ในเบราว์เซอร์ คำตอบควรมี `ok: true`, `storage: "CONTAINER_BOUND_SHEET"` และ `installed: true`
-5. วาง URL `/exec` ใน KruNote ระบบจะตรวจ API, schema และทดสอบเขียน/อ่านก่อนบันทึก URL บนอุปกรณ์
+5. นำ URL `/exec` ไปตั้งเป็น Runtime Config แล้ว KruNote จะใช้ endpoint นี้โดยอัตโนมัติ
 
 Web App เปิด endpoint แบบ Anyone เพื่อให้ GitHub Pages เรียกได้ แต่ข้อมูลต้องผ่าน PIN session แบบหมดอายุ มี rate limit และข้อมูลออฟไลน์เข้ารหัสแล้ว ควรเก็บ Web App URL และ PIN เป็นส่วนตัว
+
+## ตั้ง Web App URL ผ่าน Runtime Config
+
+ไฟล์ [public/config.js](public/config.js) เป็น Config กลางของแอป หาก `webAppUrl` มีค่า KruNote จะข้ามหน้าใส่ Web App URL และเปิดหน้า PIN ทันที Repository เก็บไฟล์นี้เป็นค่าว่างเพื่อไม่ผูกฐานข้อมูลของเจ้าของ Template เข้ากับผู้ใช้รายอื่น
+
+สำหรับ GitHub Pages ให้เก็บ URL จริงใน GitHub Actions Secret จาก Terminal:
+
+```text
+gh secret set KRUNOTE_WEB_APP_URL --body "PASTE_WEB_APP_URL_ENDING_WITH_EXEC"
+```
+
+จากนั้นรัน workflow ใหม่:
+
+```text
+gh workflow run deploy-pages.yml
+gh run watch --exit-status
+```
+
+Workflow จะสร้าง `config.js` จาก Secret ก่อน build โดย URL จริงจะไม่ถูก commit ลง repository หากไม่ได้ตั้ง Secret หรือ Config ว่าง แอปจะกลับไปแสดงหน้ากรอก URL แบบเดิมเพื่อให้ตั้งค่าด้วยตนเอง
 
 ## สร้าง GitHub Repository และเปิด Pages ผ่าน Terminal
 
@@ -171,11 +190,10 @@ gh api "repos/$KruNoteRepo/pages" --jq .html_url
 ## เปิดใช้งานครั้งแรก
 
 1. เปิด GitHub Pages URL ที่ได้จาก Terminal
-2. วาง Web App URL `/exec` ที่คัดลอกจาก Apps Script
-3. กดตรวจและเชื่อมต่อ
-4. ใส่ PIN เริ่มต้น `12345678`
-5. หากต้องการเปลี่ยน PIN ให้เปิด **การตั้งค่า → เปลี่ยน PIN** แล้วตั้งรหัสใหม่เป็นตัวเลข 6–12 หลัก
-6. ทดลองสร้างงาน เช็กชื่อ กรอกคะแนน และออก PDF/Excel ก่อนเพิ่มข้อมูลจริง
+2. เมื่อ Runtime Config ถูกต้อง แอปจะเปิดหน้า PIN โดยไม่ถาม Web App URL
+3. ใส่ PIN เริ่มต้น `12345678`
+4. หากต้องการเปลี่ยน PIN ให้เปิด **การตั้งค่า → เปลี่ยน PIN** แล้วตั้งรหัสใหม่เป็นตัวเลข 6–12 หลัก
+5. ทดลองสร้างงาน เช็กชื่อ กรอกคะแนน และออก PDF/Excel ก่อนเพิ่มข้อมูลจริง
 
 ## ติดตั้งเป็น PWA
 
@@ -214,6 +232,7 @@ Apps Script ใช้ Google Sheet Template สำเนาเป็นฐาน
 - `gh auth status` ไม่ผ่าน: รัน `gh auth login` ใหม่
 - `Repository already exists`: เปลี่ยนชื่อใน `gh repo create` หรือใช้ repository ที่มีอยู่แล้วและเพิ่ม remote ด้วย `git remote add origin URL`
 - Pages workflow ไม่เริ่ม: รัน `gh workflow run deploy-pages.yml`
+- แอปยังถาม Web App URL: ตรวจว่ามี Secret ชื่อ `KRUNOTE_WEB_APP_URL`, ค่า URL ลงท้าย `/exec` และ Deploy Pages ใหม่แล้ว
 - `/exec` พาไปหน้า Login: ตรวจว่า deployment ใช้ manifest รุ่นล่าสุดและ Web App อนุญาต Anyone
 - ไม่เห็นเมนู KruNote: รีเฟรช Google Sheet แล้วรอสักครู่ จากนั้นเปิดเมนูอีกครั้ง
 - ไม่เห็น Header/แท็บฐานข้อมูล: เปิด **ส่วนขยาย → Apps Script**, เลือก `setupKruNote` แล้ว Run ด้วยบัญชีเจ้าของชีต
